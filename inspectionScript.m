@@ -9,15 +9,16 @@ addpath utils
 addpath external/quadfit
 
 %experimentName='dataSamples/First_Time_Sensor';%
-experimentName='green-iCub-Insitu-Datasets/2018_07_10_TZ';
+%experimentName='green-iCub-Insitu-Datasets/2018_07_10_TZ';
+experimentName='green-iCub-Insitu-Datasets/yoga in loop';
 
 
 %Desired inspection sections
 checkSaturation=false;
 sphereReference=false;
 Force3Dspace=false;
-ForceVsTime=false;
-visualizeData=true;
+ForceVsTime=true;
+visualizeData=false;
 PromptForIntervals=false;
 checKJointValues= false;
 
@@ -54,7 +55,7 @@ refNames=fieldnames(referenceExp);
 
 %% Read data
 scriptOptions = {};
-scriptOptions.forceCalculation=false;%false;
+scriptOptions.forceCalculation=true;%false;
 if(checkSaturation)
     scriptOptions.raw=true;
 end
@@ -76,7 +77,7 @@ if any(input.type)
    type=input.type; 
 end
 names=fieldnames(dataset.ftData);
-sensorsToAnalize={'right_leg','left_leg'};
+sensorsToAnalize={'right_leg'};
 %%
 if(checkSaturation)
     for ftIdx =1:length(sensorsToAnalize)
@@ -150,7 +151,20 @@ if(ForceVsTime)
         
     end
 end
-
+if (compareTemperature)
+    if (length(names)>length(sensorsToAnalize))
+        for ftIdx =1:length(sensorsToAnalize)
+            ft = sensorsToAnalize{ftIdx};
+            toPlot.(ft)=dataset.ftData.(ft);
+            toPlotFiltered.(ft)=dataset.filteredFtData.(ft);
+            figure,plot(dataset.temperature.(ft),toPlot.(ft)-dataset.estimatedFtData.(ft),'.')
+            figure,plot(dataset.temperature.(ft),toPlotFiltered.(ft)-dataset.estimatedFtData.(ft),'.')
+            FTplots(toPlot,dataset.temperature.(ft),'xAxisAsIs');
+            FTplots(toPlotFiltered,dataset.temperature.(ft),'xAxisAsIs');
+        end
+    end
+      
+end
 if (visualizeData)
     global storedInis storedEnds storedTimeInis storedTimeEnds
    visualizeExperiment(dataset,input,sensorsToAnalize);
