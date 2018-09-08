@@ -8,8 +8,7 @@ addpath utils
 %% read experiment related variables
 % obtain data from all listed experiments
 experimentNames={
-    'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';% Name of the experiment;
-    '/green-iCub-Insitu-Datasets/2018_04_09_Grid_2';% Name of the experiment;
+        '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;
     };
 % read experiment options
 readOptions = {};
@@ -37,7 +36,14 @@ sensorsToAnalize = {'left_leg','right_leg'};
 %     1000000;
 %     5000000;
 %     10000000];
-lambdas=0;
+% lambdas=0;
+
+lambdas=[0;
+    1;
+    5;
+    10
+    50;
+];
 % Create appropiate names for the lambda variables
 for namingIndex=1:length(lambdas)
     if (lambdas(namingIndex)==0)
@@ -52,10 +58,11 @@ calculate=true;
 calibOptions.saveMat=true;
 calibOptions.estimateType=1;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
 calibOptions.useTemperature=true;
-calibOptions.plotForceSpace=true;
-calibOptions.plotForceVsTime=false;
-calibOptions.secMatrixFormat=false;
-calibOptions.resultEvaluation=false;
+% checking options
+checkMatrixOptions.plotForceSpace=true;
+checkMatrixOptions.plotForceVsTime=false;
+checkMatrixOptions.secMatrixFormat=false;
+checkMatrixOptions.resultEvaluation=true;
 %%
 for i=1:length(experimentNames)
     [data.(strcat('e',num2str(i))),~,~,data.(strcat('extra',num2str(i)))]=readExperiment(experimentNames{i},readOptions);
@@ -64,17 +71,48 @@ for i=1:length(experimentNames)
         dataset=data.(strcat('e',num2str(i)));
         extraSample=data.(strcat('extra',num2str(i)));
         experimentName=experimentNames{i};
-        
-        if( readOptions.printPlots )
-            run('plottinScript.m')
+        datasetToUse=dataset;
+        if isstruct(extraSample)
+            extraSampleAvailable=true;
+        else
+            extraSampleAvailable=false;
+        end
+        if extraSampleAvailable
+            extraSampleNames=fieldnames(extraSample);
+            for eSampleIDNum =1:length(extraSampleNames)
+                eSampleID = extraSampleNames{eSampleIDNum};
+                if (isstruct(extraSample.(eSampleID)))
+                    datasetToUse=addDatasets(datasetToUse,extraSample.(eSampleID));
+                end
+            end
         end
         for in=1:length(lambdas)
             lambda=lambdas(in);
             lambdaName=lambdasNames{in};
-            calibrateAndCheck
+            % calibrate
+            calibrationStep           
+            % check performance in the data set
+            [reCalibData,offsetInWrenchSpace,MSE]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+            %% Save the workspace again to include calib Matrices, scale and offset
+            %     %save recalibrated matrices, offsets, new wrenches, sensor serial
+            %     numbers
+            saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
+            if(saveResults)
+                results.usedDataset=datasetToUse;
+                results.calibrationMatrices=calibMatrices;
+                results.fullscale=fullscale;
+                results.offset=offset;
+                results.temperatureCoeff=temperatureCoeff;
+                results.offsetInWrenchSpace=offsetInWrenchSpace;
+                results.recalibratedData=reCalibData;
+                results.MSE=MSE;
+                save(strcat('data/',experimentName,'/results',lambdaName,'.mat'),'results')
+            end
+            clear results;
         end
         clear dataset;
         clear reCalibData;
         clear extraSample;
+        clear datasetToUse;
     end
 end
