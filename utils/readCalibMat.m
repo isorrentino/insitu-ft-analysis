@@ -39,3 +39,9 @@ Wf = diag([1/max_Fx 1/max_Fy 1/max_Fz 1/max_Tx 1/max_Ty 1/max_Tz]);
 Ws = diag([1/32767 1/32767 1/32767 1/32767 1/32767 1/32767]);
 cMat = inv(Wf) * calibMat *Ws;
 
+if (exist(strcat(filename,'_extraCoeff'),'file')==2)   
+    vec2=load(strcat(filename,'_extraCoeff'));
+    columns=length(vec2)/6;
+    extraCoeff=reshape(vec2,[6,columns]);
+    cMat=[cMat  extraCoeff];
+end
