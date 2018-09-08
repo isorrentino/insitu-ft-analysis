@@ -21,6 +21,7 @@ narin=0;
 cMat=[];
 lambda=0;
 temperature=[];
+varInput={};
 %% Check varargin for variables
 for v=1:2:length(varargin)
     if(ischar(  varargin{v}))
