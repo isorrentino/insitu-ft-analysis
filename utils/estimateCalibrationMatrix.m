@@ -68,7 +68,7 @@ for v=1:2:length(varargin)
                     end
                 case {'prevOffset','previousOffset','previousOFFSET'}
                     if isvector(tempV)
-                        if (sum(size(tempV)) ==(outputSize+1) && (size(tempV,1)==outputSize || size(tempV,2)==outputSize) )                            
+                        if (sum(size(tempV)) ==(outputSize+1) && (size(tempV,1)==outputSize || size(tempV,2)==outputSize) )
                             if size(tempV,2)==outputSize
                                 previous_offset=tempV';
                             else
@@ -113,7 +113,7 @@ for v=1:2:length(varargin)
                             end
                             previous_extraLinearVariable=[previous_extraLinearVariable tempPrevLinVar];
                         else
-                             warning('estimateCalibrationMatrix: length of vecotr incorrect, not extra linear variable.')
+                            warning('estimateCalibrationMatrix: length of vecotr incorrect, not extra linear variable.')
                         end
                     else
                         warning('estimateCalibrationMatrix: Expected logical, using default withTemperature value.')
@@ -149,9 +149,9 @@ else %% build toPenalize based on previousLinearVariables info
     %TODO: check if it should be depending on output size or input size
     toPenalize=eye(outputSize*(inputSize+extraLinearVariablesNumber));
     for elv=1:extraLinearVariablesNumber
-        toModify=calibrationMatrixLength+(elv-1)*inputSize+1:calibrationMatrixLength+elv*inputSize;
+        toModify=calibrationMatrixLength+(elv-1)*outputSize+1:calibrationMatrixLength+elv*outputSize;
         if ~previousLinearVariables(elv)
-            toPenalize(toModify,toModify)=zeros(inputSize);
+            toPenalize(toModify,toModify)=zeros(outputSize);
         end
     end
 end
@@ -165,7 +165,7 @@ kb=expectedWrench_trans(:);
 %% TODO: select if division by kaSize helps or not,
 % using it makes it more sensible to the regularization parameters and is
 % also the way we were using it in the main estimate function
-kaSize=size(kA,1); 
+kaSize=size(kA,1);
 A=(kA'*kA)/kaSize+lambda*toPenalize;
 b=(kA'*kb)/kaSize+lambda*toPenalizeReference;
 
@@ -195,9 +195,19 @@ end
 maxs = sign(calibrationMatrix)*32767;
 full_scale = diag(calibrationMatrix*maxs');
 max_Fx = ceil(full_scale(1));
-max_Fy = ceil(full_scale(2));
-max_Fz = ceil(full_scale(3));
-max_Tx = ceil(full_scale(4));
-max_Ty = ceil(full_scale(5));
-max_Tz = ceil(full_scale(6));
-
+if length(full_scale)>1
+    max_Fy = ceil(full_scale(2));
+    if length(full_scale)>2
+        max_Fz = ceil(full_scale(3));
+        if length(full_scale)>3
+            max_Tx = ceil(full_scale(4));
+            if length(full_scale)>4
+                max_Ty = ceil(full_scale(5));
+                if length(full_scale)>5
+                    max_Tz = ceil(full_scale(6));
+                end
+            end
+        end
+    end
+end
+end
