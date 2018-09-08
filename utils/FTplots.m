@@ -25,6 +25,7 @@ referenceName='reference';
 showDifference=false;
 referenceTime=[];
 xAxisOption='TimeStamp';
+xAxisOffset=true;
 if (length(varargin)==1)
     if(ischar(  varargin{1}))
         switch varargin{1}
@@ -38,6 +39,8 @@ if (length(varargin)==1)
                 showDifference=true;
             case {'noTimeStamp','NOTIMESTAMP','USESAMPLES','useSamples'}
                 xAxisOption='Samples';
+            case {'noOffsetOnX','xAxisAsIs','noTimeOffset'}
+                xAxisOffset=false;
             otherwise
                 warning('FTplots: Unexpected option going by default options.')
         end
@@ -60,6 +63,8 @@ else
                         showDifference=true;
                     case {'noTimeStamp','NOTIMESTAMP','notimestamp','USESAMPLES','useSamples','usesamples'}
                         xAxisOption='Samples';
+                    case {'noOffsetOnX','xAxisAsIs','noTimeOffset'}
+                        xAxisOffset=false;
                     otherwise
                         referenceName=varargin{count};
                 end
@@ -114,9 +119,16 @@ if (size(fields,1)==2 && showDifference && isempty(reference))
 end
 
 if  strcmp(xAxisOption,'TimeStamp')
-    xAxis=time-time(1);
-    if ~isempty(reference)
-        xAxisReference=referenceTime-referenceTime(1);
+    if xAxisOffset
+        xAxis=time-time(1);
+        if ~isempty(reference)
+            xAxisReference=referenceTime-referenceTime(1);
+        end
+    else
+        xAxis=time;
+        if ~isempty(reference)
+            xAxisReference=referenceTime;
+        end
     end
 else
     xAxis=1:length(time);
