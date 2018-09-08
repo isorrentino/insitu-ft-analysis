@@ -78,7 +78,7 @@ for sample=sampleInit:sampleEnd
     
       
     
-    disp(strcat('using contact frame ',char(input.contactFrameName)));
+    disp(strcat('using contact frame',{' '},char(input.contactFrameName)));
     % Set the contact information in the estimator
     contact_index = estimator.model().getFrameIndex(char(input.contactFrameName));
     ok = estimator.updateKinematicsFromFixedBase(qj_idyn,dqj_idyn,ddqj_idyn,contact_index,grav_idyn);
