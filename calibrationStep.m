@@ -63,6 +63,10 @@ if(calibOptions.saveMat)
         end
         firmwareMat=calibMatrices.(ft);
         full_scale=fullscale.(ft);
+        if ~isempty(temperatureCoeff)            
+        writeCalibMat(firmwareMat, full_scale, filename,temperatureCoeff.(ft))
+        else
         writeCalibMat(firmwareMat, full_scale, filename)
+        end
     end
 end
