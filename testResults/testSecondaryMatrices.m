@@ -32,27 +32,35 @@ scriptOptions.printAll=true;
 
 %Use only datasets where the same sensor is used
 experimentNames={
-    'green-iCub-Insitu-Datasets/2018_04_09_Grid_2';
-     'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
+    'green-iCub-Insitu-Datasets/2018_07_10_Grid';
+    'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight'
+%      'green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';
+%      'green-iCub-Insitu-Datasets/2018_07_10_Grid_multipleTemperatures';
     }; %this set is from iCubGenova04
 names={'Workbench';
-    'withTz';
-    'DecemberData';
+    'coldSession';
+    'decemberNoTemp';
+%     'warmSession';
+%     'coldAndWarmSession';
     };% except for the first one all others are short names for the expermients in experimentNames
 
 
-%lambdas=[0];
-lambdas=[0;
-    10
-    50;
-    1000;
-    10000;
-    50000;
-    100000;
-    500000;
-    1000000;
-    5000000;
-    10000000];
+% lambdas=[0];
+% lambdas=[0;
+%     1;
+%     5;
+%     10;
+%     50;
+%     100;
+%     1000;
+%     5000;
+%     10000;
+%     50000;
+%     100000;
+%     500000
+%     ];
+lambdas=[1];
+
 % Create appropiate names for the lambda variables
 for namingIndex=1:length(lambdas)
     if (lambdas(namingIndex)==0)
@@ -63,6 +71,8 @@ for namingIndex=1:length(lambdas)
 end
 lambdasNames=lambdasNames';
 
+% do something similar but with estimation types, consider temperature on
+% and off as different estimation types
 
 names2use{1}=names{1};
 num=2;
@@ -75,23 +85,24 @@ end
 names2use=names2use';
 
 %%  Select sensors and frames to analize
-sensorsToAnalize = {'left_leg','right_leg'};  %load the new calibration matrices
-framesToAnalize={'l_upper_leg','r_upper_leg'};
-sensorName={'l_leg_ft_sensor','r_leg_ft_sensor'};
-
-% sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
-% framesToAnalize={'l_upper_leg'};
-% sensorName={'l_leg_ft_sensor'};
+% sensorsToAnalize = {'left_leg','right_leg'};  %load the new calibration matrices
+% framesToAnalize={'l_upper_leg','r_upper_leg'};
+% sensorName={'l_leg_ft_sensor','r_leg_ft_sensor'};
+reduceBy=2000; % value used in datasampling;
+sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
+framesToAnalize={'l_upper_leg'};
+sensorName={'l_leg_ft_sensor'};
 
 
 %% Read the calibration matrices to evaluate
 
-[cMat,secMat,WorkbenchMat]=readGeneratedCalibMatrices(experimentNames,scriptOptions,sensorsToAnalize,names2use,lambdasNames);
+[cMat,secMat,WorkbenchMat,extraCoeff]=readGeneratedCalibMatrices(experimentNames,scriptOptions,sensorsToAnalize,names2use,lambdasNames);
 
 %% Select datasets in which the matrices will be evaluated
-%toCompare={'iCubGenova04/exp_1/yogaLeft','iCubGenova04/exp_1/yogaRight'};%datasets name 'leftYoga' 'failedLeftYoga'
-toCompare={'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_2/yogaRight','icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_2/yogaLeft'};
-toCompareNames={'yogaRight','yogaLeft'}; % short Name of the experiments
+toCompare={'green-iCub-Insitu-Datasets/yoga in loop'};
+toCompareNames={'yoga Loop'}; % short Name of the experiments
+% toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
+% toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
 
 compareDatasetOptions = {};
 compareDatasetOptions.forceCalculation=false;%false;
@@ -106,7 +117,12 @@ compareDatasetOptions.useInertial=false;
 
 for c=1:length(toCompare)
     [data.(toCompareNames{c}),estimator,input]=readExperiment(toCompare{c},compareDatasetOptions);
-    
+    dataFields=fieldnames(data.(toCompareNames{c}));
+     if ~ismember('temperature',dataFields)
+        withTemperature=false;
+     else
+         withTemperature=true;
+     end
     %TODO: have a more general structure with multiple datasets, and multiple
     %inputs to be able to check on multiple experiments in the end maybe
     %external forces can be combined from both experiments just to get the best
@@ -131,7 +147,7 @@ for c=1:length(toCompare)
     fprintf('Filtering %s \n',(toCompareNames{c}));
     [data.(toCompareNames{c}).ftData,mask]=filterFtData(data.(toCompareNames{c}).ftData);
     data.(toCompareNames{c})=applyMask(data.(toCompareNames{c}),mask);
-    [data.(toCompareNames{c}),~]= dataSampling(data.(toCompareNames{c}),2);
+    [data.(toCompareNames{c}),~]= dataSampling(data.(toCompareNames{c}),reduceBy);
     
    
     
@@ -146,11 +162,22 @@ for c=1:length(toCompare)
              
   
             cd ../
+            if ~withTemperature
             [results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForces,...
                 results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime]=...
                 estimateExternalForces... %obtainExternalForces ... %
                 (input.robotName,data.(toCompareNames{c}),sMat,input.sensorNames,...
-                input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),{sensorsToAnalize{j}});
+                input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),...
+                'sensorsToAnalize',{sensorsToAnalize{j}});
+            else
+                sensorsExtraCoeff.(sensorsToAnalize{j})=extraCoeff.(names2use{i}).(sensorsToAnalize{j});
+                [results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForces,...
+                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime]=...
+                estimateExternalForces... %obtainExternalForces ... %
+                (input.robotName,data.(toCompareNames{c}),sMat,input.sensorNames,...
+                input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),...
+                'sensorsToAnalize',{sensorsToAnalize{j}},'extraVar',data.(toCompareNames{c}).temperature,'extraCoeff',sensorsExtraCoeff);                
+            end
             % we restrict the offset to be used to only the sensor we are
             % analizing by passing in sensorstoAnalize only the sensor we
             % are analizing at the moment, otherwise it induces errors in

@@ -15,37 +15,113 @@ function [externalWrenches,time,jointTorques]= estimateExternalForces(robotName,
 useInertial=false;
 mask=[];
 sensorsToAnalize=NaN;
+extraLinearVariablesNumber=0;
+useEstimatedData=true;
+extraCoeff=NaN;
+extraLinearVariables=NaN;
+numberOfSamples=length(dataset.time);
+secNames=fieldnames(secMat);
+outputSize=size(secMat.(secNames{1}),1);
+extraCoeffDefaultValue=zeros(outputSize,1);
 if(~isempty(varargin))
-    if (length(varargin)<4)
-        for v=1:length(varargin)
-            if (islogical(varargin{v}))% it means mask available
-                maskTemp=varargin{v};
-                if(size(mask)==size(dataset.time))
-                    mask=maskTemp;
+    skip=false;
+    if mod(length(varargin),2)==0
+        for v=1:2:length(varargin)
+            if ~skip
+                content=varargin{v+1};
+                if(ischar(  varargin{v}))
+                    switch lower(varargin{v})
+                        case {'mask'}
+                            if islogical(content)
+                                if(size(mask)==size(dataset.time))
+                                    mask=content;
+                                else
+                                    warning('estimateExternalForces:Mask is the wrong size, parameter ignored');
+                                end
+                            end
+                        case {'sensorstoanalize','sensors to analize','analize only this sensors'}%'sensorsToAnalize'
+                            if iscell(content)
+                                sensorsToAnalize=content;
+                            else
+                                warning('estimateExternalForces: sensorsToAnalize should be a cell array, parameter ignored');
+                            end
+                        case {'inertial','inertialdata','inertial data'}
+                            if isstruct(content) % it means inertial data is provided
+                                inertialData=content;
+                                inertialFields=fieldnames(inertialData);
+                                if length(inertialFields)==2
+                                    useInertial=true;
+                                else
+                                    warning('estimateExternalForces: Expected inertial data that has only 2 fields');
+                                end
+                            end
+                        case {'extravar','extra variable','extralinearvariable','add linear variable','extra linear variable value','addlinvar','addextlinvarval'}
+                            if isstruct(content)
+                                contentNames= fieldnames(content);
+                                extraLinearVariables=struct();
+                                extraCoeff=struct();
+                                for namesIndex=1:length(contentNames)
+                                    contentName=contentNames{namesIndex};
+                                    if length(content.(contentName))==numberOfSamples
+                                        if ~ismember(contentName,fieldnames(extraLinearVariables))
+                                            extraLinearVariables.(contentName)=content.(contentName);
+                                        else
+                                            extraLinearVariables.(contentName)=[extraLinearVariables.(contentName) content.(contentName)];
+                                        end
+                                        extraLinearVariablesNumber=extraLinearVariablesNumber+1;
+                                        %% check if there is previous information on this new linear variable to consider
+                                        tempPrevLinVar=extraCoeffDefaultValue;
+                                        if v+3<=length(varargin) % needs 3 more options in varargin to check this
+                                            vtoCheck=varargin{v+2};
+                                            vtoCheckValue=varargin{v+3};
+                                            if sum(strcmpi(vtoCheck,{'extracoeff','extra linear variable coefficients','varcoeff', 'extra coefficients'}))>0
+                                                if ismember(contentName,fieldnames(vtoCheckValue))                                                    
+                                                    if isvector(vtoCheckValue.(contentName))
+                                                        if (sum(size(vtoCheckValue.(contentName))) ==(outputSize+1) && (size(vtoCheckValue.(contentName),1)==outputSize || size(vtoCheckValue.(contentName),2)==outputSize) )
+                                                            tempPrevLinVar=vtoCheckValue.(contentName);
+                                                            skip=true;
+                                                        else
+                                                            skip=false || skip;
+                                                            warning('estimateExternalForces: this vector is not of the right dimensions, ignoring vector');
+                                                        end
+                                                    else
+                                                        warning('estimateExternalForces: Expected a vector, using default value of 0.')
+                                                    end
+                                                else
+                                                    % there is no sensor so put 0's
+                                                end
+                                            end
+                                        else
+                                            warning('estimateExternalForces: No coefficient available so coeff will be set to 0, the variable will have no effec in recalibrating the data.')
+                                        end
+                                        if ~ismember(contentName,fieldnames(extraCoeff))
+                                            extraCoeff.(contentName)=tempPrevLinVar;
+                                        else
+                                        extraCoeff.(contentName)=[extraCoeff.(contentName) tempPrevLinVar];
+                                        end
+                                    end
+                                end
+                            else
+                                warning('estimateExternalForces: Expected a vector, using default ignoring variable.')
+                            end
+                        case {'useestimateddata','use estimated data','use estimated data on sensors not to analize','dont use ft measurements'}
+                            if islogical(content)
+                                useEstimatedData=content;
+                            else
+                                 warning('estimateExternalForces: expecte logical, by default estimation will use estimated data for the sensors not being analized')
+                            end
+                    end
                 else
-                    disp('Mask is the wrong size');
+                    warning('estimateExternalForces: Unexpected option.')
                 end
             else
-                if(isstruct(varargin{v})) % it means inertial data is provided
-                    inertialData=varargin{v};
-                    inertialFields=fieldnames(inertialData);
-                    if(length(inertialFields)==2)
-                        useInertial=true;
-                    else
-                        disp('Error! Expected inertial data that has only 2 fields');
-                    end
-                else
-                    if (iscell(varargin{v}))
-                        sensorsToAnalize=varargin{v};
-                    else
-                    disp('Not valid argument');
-                    end
-                end
+                % since we already skipped make skip false again
+                skip=false;
             end
         end
     else
-        disp('Too many arguments, check what you are sending (extra parameters ignored)')
-    end
+        error( 'estimateExternalForces: varargin should contain and even number of parameters, something is wrong');
+    end   
 end
 
 %% resize data to desired timeFrame
@@ -57,6 +133,21 @@ dataset=applyMask(dataset,mask);
 sNames=fieldnames(dataset.ftData);
 if ~iscell(sensorsToAnalize)
 sensorsToAnalize=fieldnames(secMat);
+end
+% fill with zeros when no extra coeff are available
+for sIndex=1:length(sensorsToAnalize)
+    ft=sensorsToAnalize{sIndex};
+    if ~isstruct(extraCoeff)
+        extraCoeff=struct();
+        extraLinearVariables=struct();
+        extraCoeff.(ft)=zeros(outputSize,1);
+        extraLinearVariables.(ft)=zeros(size(dataset.time));
+    else
+        if ~strcmp((ft),fieldnames(extraCoeff))
+            extraCoeff.(ft)=zeros(outputSize,1);
+            extraLinearVariables.(ft)=zeros(size(dataset.time));
+        end
+    end
 end
 %TODO: might be easier to just get the indexes of the time start and finish
 %of the time frame and just take those values for t
@@ -88,7 +179,7 @@ if (useInertial)
 end
 if (length(contactFrameName)==1)
 % Set the contact information in the estimator
-disp(strcat('using contact frame ',char(contactFrameName)));
+disp(strcat('using contact frame',{' '},char(contactFrameName)));
 contact_index = estimator.model().getFrameIndex(char(contactFrameName));
 end
 
@@ -158,9 +249,14 @@ for t=1:length(dataset.time)
        sIndx= find(strcmp(sensorsToAnalize,sNames(matchup(ftIndex+1))));
        
         if(~isempty(sIndx))
-        wrench_idyn.fromMatlab( (secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)')-offset.(sNames{matchup(ftIndex+1)}));
+        wrench_idyn.fromMatlab( (secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)')-offset.(sNames{matchup(ftIndex+1)})...
+            + extraCoeff.(sensorsToAnalize{sIndx})*extraLinearVariables.(sNames{matchup(ftIndex+1)})(t,:)');
         else
-        wrench_idyn.fromMatlab( dataset.estimatedFtData.(sNames{matchup(ftIndex+1)})(t,:)');
+            if useEstimatedData
+                wrench_idyn.fromMatlab( dataset.estimatedFtData.(sNames{matchup(ftIndex+1)})(t,:)');
+            else
+                wrench_idyn.fromMatlab( dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)'-offset.(sNames{matchup(ftIndex+1)}));
+            end
         end
         ok = estFTmeasurements.setMeasurement(iDynTree.SIX_AXIS_FORCE_TORQUE,ftIndex,wrench_idyn);
         
