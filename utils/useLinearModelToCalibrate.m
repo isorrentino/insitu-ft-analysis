@@ -16,7 +16,7 @@ useExtraSample=true;
 extraSamplesAvailable=false;
 withRegularization=true;
 withTemperature=false;
-estimationType=1; %0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
+estimationType=1; %0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on main dataset, 4 is oneshot
 narin=0;
 cMat=[];
 lambda=0;
@@ -96,8 +96,8 @@ end
 
 %% extra logic
 % if want to use one shot but no extra samples
-if ~extraSamplesAvailable && estimationType==4
-    estimationType=3;
+if ~extraSamplesAvailable && estimationType==3
+    estimationType=2;
 end
 if withTemperature
     if ~ismember('temperature',dataFields)
@@ -173,7 +173,7 @@ for ftIdx =1:length(sensorsToAnalize)
             offset.(ft)=estimateOffsetUsingInSitu(rawData.(ft), estimatedFtData.(ft)(:,1:3));
             rawToUse=rawData.(ft)+repmat(offset.(ft),size(rawData.(ft),1),1);
             expectedWrench=estimatedFtData.(ft);
-        else %% prepare mean values for non insitu offset
+        else %% prepare mean values for no mean offset
             meanFt=mean(rawData.(ft));
             meanEst=mean(estimatedFtData.(ft));
             rawToUse=rawData.(ft)-repmat(meanFt,size(rawData.(ft),1),1);
@@ -191,7 +191,7 @@ for ftIdx =1:length(sensorsToAnalize)
             end
         end
     end
-    %% one shot on main dataset
+    %% no mean dataset
     if estimationType==3
         rawToUse=rawData.(ft);
         expectedWrench=estimatedFtData.(ft);
@@ -200,7 +200,7 @@ for ftIdx =1:length(sensorsToAnalize)
         offset.(ft)=calibMatrices.(ft)\offsetInForce;
         varInput{offsetIndex}=false;
     end
-    if estimationType<4
+    if estimationType<3
         %% correct dimensions of the offset if needed before use
         [rows,columns]=size(offset.(ft));
         if rows==6 && columns==1
@@ -221,21 +221,36 @@ for ftIdx =1:length(sensorsToAnalize)
             expectedWrench=stackedExpectedWrench;
             rawToUse=stackedRawtoUse;
         end
-        if estimationType<4 %% offset is known, remove from the raw data
+        if estimationType<3 %% offset is known, remove from the raw data
             if calibrationRequired
                 rawToUse=stackedRawtoUse+repmat(offset.(ft),size(stackedRawtoUse,1),1);
             end
             [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=...
                 estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
         else % estimate offset as well
-%             if  withTemperature %TODO: decide to keep this or not
-%                 varInput{narin+1}='previousOffset';
-%                 narin=narin+2;
-%                 prevOffsetIndex=narin;
-%                 varInput{prevOffsetIndex}=expectedWrench(1,:)'-cMat.(ft)*rawToUse(1,:)';
-%             end
+            %             if  withTemperature %TODO: decide to keep this or not
+            %                 varInput{narin+1}='previousOffset';
+            %                 narin=narin+2;
+            %                 prevOffsetIndex=narin;
+            %                 varInput{prevOffsetIndex}=expectedWrench(1,:)'-cMat.(ft)*rawToUse(1,:)';
+            %             end
+            if estimationType==3
+                if calibrationRequired
+                    meanFt=mean(stackedRawtoUse);
+                    meanEst=mean(stackedExpectedWrench);
+                    rawToUse=stackedRawtoUse-repmat(meanFt,size(stackedRawtoUse,1),1);
+                    expectedWrench=stackedExpectedWrench-repmat(meanEst,size(stackedExpectedWrench,1),1);
+                end
+                 [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});            
+                if sum(tempCoeff)~=0
+                    offsetInForce=meanEst'-calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft));
+                else
+                    offsetInForce=meanEst'-calibMatrices.(ft)*meanFt';
+                end
+            else % full one shot
             [calibMatrices.(ft),fullscale.(ft),offsetInForce,tempCoeff]=...
                 estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
+            end
             offset.(ft)=calibMatrices.(ft)\offsetInForce;
             %% correct dimensions of the offset if needed after estimation
             [rows,columns]=size(offset.(ft));
