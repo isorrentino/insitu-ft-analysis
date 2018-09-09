@@ -36,15 +36,18 @@ if(calibOptions.saveMat)
     end
     for ftIdx =1:length(sensorsToAnalize)
         ft = sensorsToAnalize{ftIdx};
-        i=find(strcmp(ft, names));
+        ftIndex=find(strcmp(ft, names));
         if (round(dataset.cMat.(ft))==eye(6))
             calibOptions.firstTime=true;
         else
             calibOptions.firstTime=false;
         end
+        if ~exist('estimationName','var')
+            estimationName='';
+        end
         if (calibOptions.firstTime)
             if (any(strcmp('calibOutputNames', fieldnames(input))))
-                filename=strcat('data/',experimentName,'/calibrationMatrices/', input.calibOutputNames{i},lambdaName);
+                filename=strcat('data/',experimentName,'/calibrationMatrices/', input.calibOutputNames{ftIndex},lambdaName,estimationName);
             else
                 prompt={'First time sensor:                 insert serial number or      desired sensor name'};
                 name = 'Sensor name';
@@ -59,14 +62,15 @@ if(calibOptions.saveMat)
                 end
             end
         else
-            filename=strcat('data/',experimentName,'/calibrationMatrices/',dataset.calibMatFileNames{i},lambdaName);
+            
+            filename=strcat('data/',experimentName,'/calibrationMatrices/',dataset.calibMatFileNames{ftIndex},lambdaName,estimationName);
         end
         firmwareMat=calibMatrices.(ft);
         full_scale=fullscale.(ft);
-        if ~isempty(temperatureCoeff)            
-        writeCalibMat(firmwareMat, full_scale, filename,temperatureCoeff.(ft))
+        if ~isempty(temperatureCoeff)
+            writeCalibMat(firmwareMat, full_scale, filename,temperatureCoeff.(ft))
         else
-        writeCalibMat(firmwareMat, full_scale, filename)
+            writeCalibMat(firmwareMat, full_scale, filename)
         end
     end
 end
