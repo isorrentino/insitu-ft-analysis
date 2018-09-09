@@ -43,18 +43,20 @@ addpath utils
 %% Read data
     % general reading configuration options
 readOptions = {};
-readOptions.forceCalculation=true;%false;
+readOptions.forceCalculation=false;%false;
 readOptions.raw=true;
 readOptions.saveData=true;
 readOptions.multiSens=true;
 readOptions.matFileName='ftDataset'; % name of the mat file used for save the experiment data
     % options not from read experiment
-readOptions.printPlots=true;%true
+readOptions.printPlots=false;%true
     % name and paths of the experiment files
     % change name to desired experiment folder
-% experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
-
-experimentName='/green-iCub-Insitu-Datasets/2018_07_10_TZ';
+   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';
+   
+%    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';
+% experimentName='icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
+% experimentName='/green-iCub-Insitu-Datasets/2018_07_10_TZ';
 [dataset,~,input,extraSample]=readExperiment(experimentName,readOptions);
 
 %% Calibration options
@@ -63,8 +65,13 @@ experimentName='/green-iCub-Insitu-Datasets/2018_07_10_TZ';
     % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
 sensorsToAnalize = {'right_leg','left_leg'};
     %Regularization parameter
-lambda=0;
-lambdaName='';
+lambda=1;
+if (lambda==0)
+    lambdaName='';
+else
+    lambdaName=strcat('_l',num2str(lambda));
+end
+% lambdaName='';
     %calibration script options
 calibOptions.saveMat=true;
 calibOptions.estimateType=1;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
@@ -84,11 +91,15 @@ if extraSampleAvailable
     for eSampleIDNum =1:length(extraSampleNames)
         eSampleID = extraSampleNames{eSampleIDNum};
         if (isstruct(extraSample.(eSampleID)))
-            datasetToUse=addDatasets(datasetToUse,extraSample.(eSampleID));
+            for eSamples=1:length(extraSample.(eSampleID))
+                fprintf(' datasetTouse %i, extrasample %i, sum = %i \n',length(datasetToUse.time),length(extraSample.(eSampleID)(eSamples).time),length(datasetToUse.time)+length(extraSample.(eSampleID)(eSamples).time))
+                datasetToUse=addDatasets(datasetToUse,extraSample.(eSampleID)(eSamples));
+                fprintf(' datasetTouse %i after stacking \n',length(datasetToUse.time))
+            end
         end
     end
 end
-[reCalibData,offsetInWrenchSpace]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+[reCalibData,offsetInWrenchSpace,MSE]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
 
 %% save results
 %% Save the workspace again to include calib Matrices, scale and offset
@@ -103,6 +114,7 @@ if(saveResults)
     results.temperatureCoeff=temperatureCoeff;
     results.offsetInWrenchSpace=offsetInWrenchSpace;
     results.recalibratedData=reCalibData;
+    results.MSE=MSE;
     save(strcat('data/',experimentName,'/results.mat'),'results')
 end
 
