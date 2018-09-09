@@ -1,4 +1,4 @@
-function [externalWrenches,time,jointTorques]= estimateExternalForces(robotName,dataset,secMat,sensorNames,contactFrameName,timeFrame,framesNames,offset,varargin)
+function [externalWrenches,time,jointTorques,externalWrenchesAtSensorFrame]= estimateExternalForces(robotName,dataset,secMat,sensorNames,contactFrameName,timeFrame,framesNames,offset,varargin)
 %% This function will estimate the external forces using the measurements in the case of the desired sensor to analize and the estimated wrenches otherwise.
 % The aim of doing this is to reduce the sources of uncertainty to only one
 % sensor at a time.
@@ -7,7 +7,7 @@ function [externalWrenches,time,jointTorques]= estimateExternalForces(robotName,
 %   dataset         : contains the joint position velocities and
 %   accelerations
 %   resampleTime   : time that will be used as reference time
-%   contactFrameName : the name of the frame on which it is assumed that an 
+%   contactFrameName : the name of the frame on which it is assumed that an
 %                      external contact is (tipically the
 %                      root_link, r_sole or l_sole)
 
@@ -75,7 +75,7 @@ if(~isempty(varargin))
                                             vtoCheck=varargin{v+2};
                                             vtoCheckValue=varargin{v+3};
                                             if sum(strcmpi(vtoCheck,{'extracoeff','extra linear variable coefficients','varcoeff', 'extra coefficients'}))>0
-                                                if ismember(contentName,fieldnames(vtoCheckValue))                                                    
+                                                if ismember(contentName,fieldnames(vtoCheckValue))
                                                     if isvector(vtoCheckValue.(contentName))
                                                         if (sum(size(vtoCheckValue.(contentName))) ==(outputSize+1) && (size(vtoCheckValue.(contentName),1)==outputSize || size(vtoCheckValue.(contentName),2)==outputSize) )
                                                             tempPrevLinVar=vtoCheckValue.(contentName);
@@ -97,7 +97,7 @@ if(~isempty(varargin))
                                         if ~ismember(contentName,fieldnames(extraCoeff))
                                             extraCoeff.(contentName)=tempPrevLinVar;
                                         else
-                                        extraCoeff.(contentName)=[extraCoeff.(contentName) tempPrevLinVar];
+                                            extraCoeff.(contentName)=[extraCoeff.(contentName) tempPrevLinVar];
                                         end
                                     end
                                 end
@@ -108,7 +108,7 @@ if(~isempty(varargin))
                             if islogical(content)
                                 useEstimatedData=content;
                             else
-                                 warning('estimateExternalForces: expecte logical, by default estimation will use estimated data for the sensors not being analized')
+                                warning('estimateExternalForces: expecte logical, by default estimation will use estimated data for the sensors not being analized')
                             end
                     end
                 else
@@ -121,7 +121,7 @@ if(~isempty(varargin))
         end
     else
         error( 'estimateExternalForces: varargin should contain and even number of parameters, something is wrong');
-    end   
+    end
 end
 
 %% resize data to desired timeFrame
@@ -132,7 +132,7 @@ dataset=applyMask(dataset,mask);
 
 sNames=fieldnames(dataset.ftData);
 if ~iscell(sensorsToAnalize)
-sensorsToAnalize=fieldnames(secMat);
+    sensorsToAnalize=fieldnames(secMat);
 end
 % fill with zeros when no extra coeff are available
 for sIndex=1:length(sensorsToAnalize)
@@ -148,7 +148,10 @@ for sIndex=1:length(sensorsToAnalize)
             extraLinearVariables.(ft)=zeros(size(dataset.time));
         end
     end
+    desiredSensorsIndex(sIndex)= find(strcmp(sNames,(ft)));
 end
+
+
 %TODO: might be easier to just get the indexes of the time start and finish
 %of the time frame and just take those values for t
 %% Load the estimator
@@ -158,6 +161,10 @@ estimator = iDynTree.ExtWrenchesAndJointTorquesEstimator();
 
 % Load model and sensors from the URDF file
 estimator.loadModelAndSensorsFromFile(strcat('./robots/',robotName,'.urdf'));
+
+% Create KinDynComputations class variable
+kinDyn = iDynTree.KinDynComputations();
+kinDyn.loadRobotModel(estimator.model)
 
 % Check if the model was correctly created by printing the model
 %estimator.model().toString()
@@ -178,9 +185,9 @@ if (useInertial)
     angAcc_idyn = iDynTree.Vector3();
 end
 if (length(contactFrameName)==1)
-% Set the contact information in the estimator
-disp(strcat('using contact frame',{' '},char(contactFrameName)));
-contact_index = estimator.model().getFrameIndex(char(contactFrameName));
+    % Set the contact information in the estimator
+    disp(strcat('using contact frame',{' '},char(contactFrameName)));
+    contact_index = estimator.model().getFrameIndex(char(contactFrameName));
 end
 
 % The estimated FT sensor measurements
@@ -197,7 +204,7 @@ estFTmeasurements = iDynTree.SensorsMeasurements(estimator.sensors());
 fullBodyUnknownsExtWrenchEst = iDynTree.LinkUnknownWrenchContacts(estimator.model());
 
 % framesNames={'l_sole','r_sole','l_lower_leg','r_lower_leg','root_link','l_elbow_1','r_elbow_1'};
-for frame=1:length(framesNames) 
+for frame=1:length(framesNames)
     fullBodyUnknownsExtWrenchEst.addNewUnknownFullWrenchInFrameOrigin(estimator.model(),estimator.model().getFrameIndex(framesNames{frame}));
 end
 
@@ -221,12 +228,13 @@ end
 
 
 %size of array with the expected Data
-ftData=zeros(length(framesNames),size(dataset.time,1),6);
+externalWrenchData=zeros(length(framesNames),size(dataset.time,1),6);
+externalWrenchOnSensorFrame=zeros(length(framesNames),size(dataset.time,1),6);
 jointTorques=zeros(size(qj_all));
 %% For each time instant
 fprintf('estimateExternalForces: Computing the estimated wrenches\n');
 for t=1:length(dataset.time)
-    tic 
+    tic
     qj=qj_all(t,:);
     dqj=dqj_all(t,:);
     ddqj=ddqj_all(t,:);
@@ -240,17 +248,17 @@ for t=1:length(dataset.time)
         contact_index = estimator.model().getFrameIndex(char(contactFrameName(t)));
     end
     
-    % print progress test 
-    if( mod(t,10000) == 0 ) 
+    % print progress test
+    if( mod(t,10000) == 0 )
         fprintf('estimateExternalForces: process the %d sample out of %d\n',t,length(dataset.time))
     end
-     % store the estimated measurements
+    % store the estimated measurements
     for ftIndex = 0:(nrOfFTSensors-1)
-       sIndx= find(strcmp(sensorsToAnalize,sNames(matchup(ftIndex+1))));
-       
+        sIndx= find(strcmp(sensorsToAnalize,sNames(matchup(ftIndex+1))));
+        
         if(~isempty(sIndx))
-        wrench_idyn.fromMatlab( (secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)')-offset.(sNames{matchup(ftIndex+1)})...
-            + extraCoeff.(sensorsToAnalize{sIndx})*extraLinearVariables.(sNames{matchup(ftIndex+1)})(t,:)');
+            wrench_idyn.fromMatlab( (secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)')-offset.(sNames{matchup(ftIndex+1)})...
+                + extraCoeff.(sensorsToAnalize{sIndx})*extraLinearVariables.(sNames{matchup(ftIndex+1)})(t,:)');
         else
             if useEstimatedData
                 wrench_idyn.fromMatlab( dataset.estimatedFtData.(sNames{matchup(ftIndex+1)})(t,:)');
@@ -267,39 +275,47 @@ for t=1:length(dataset.time)
         angAcc_idyn.fromMatlab([0;0;0]);
         % Set the kinematics information in the estimator
         ok = estimator.updateKinematicsFromFloatingBase(qj_idyn,dqj_idyn,ddqj_idyn,contact_index,grav_idyn,angVel_idyn,angAcc_idyn);
-        
     else
         ok = estimator.updateKinematicsFromFixedBase(qj_idyn,dqj_idyn,ddqj_idyn,contact_index,grav_idyn);
     end
-% Now we can call the estimator
-estimator.estimateExtWrenchesAndJointTorques(fullBodyUnknownsExtWrenchEst,estFTmeasurements,estContactForcesExtWrenchesEst,estJointTorquesExtWrenchesEst);
-     
-
-% We can now print the estimated external forces : as the FT sensor measurements where estimated
-% under the assumption that the only external wrench is acting on the left foot, we should see
-% that the only non-zero wrench is the one on the left foot (frame: l_sole)
-% fprintf('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n');
-% fprintf('External wrenches estimated using the F/T offset computed in the previous step\n');
-% fprintf('%s',estContactForcesExtWrenchesEst.toString(estimator.model()));
-
-% Wrenches values can easily be obtained as matlab vectors
-%estContactForcesExtWrenchesEst.contactWrench(estimator.model().getLinkIndex('l_foot'),0).contactWrench().getLinearVec3().toMatlab()
-
-
-% LinkContactWrenches is a structure that can contain multiple contact wrench for each link,
-% but usually is convenient to just deal with a collection of net wrenches for each link
-linkNetExtWrenches = iDynTree.LinkWrenches(estimator.model());%
-estContactForcesExtWrenchesEst.computeNetWrenches(linkNetExtWrenches);
-
-for i=1:length(framesNames)
-wrench = linkNetExtWrenches(estimator.model().getFrameLink(estimator.model().getFrameIndex(framesNames{i})));
-%wrench.toMatlab();
-ftData(i,t,:)=wrench.toMatlab();
-end 
+    % update robot state in the kindyncomputations variable, use this since
+    % we only care about relative transforms
+    kinDyn.setRobotState(qj_idyn,dqj_idyn,grav_idyn);
+    
+    % Now we can call the estimator
+    estimator.estimateExtWrenchesAndJointTorques(fullBodyUnknownsExtWrenchEst,estFTmeasurements,estContactForcesExtWrenchesEst,estJointTorquesExtWrenchesEst);
+    
+    
+    % We can now print the estimated external forces : as the FT sensor measurements where estimated
+    % under the assumption that the only external wrench is acting on the left foot, we should see
+    % that the only non-zero wrench is the one on the left foot (frame: l_sole)
+    % fprintf('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n');
+    % fprintf('External wrenches estimated using the F/T offset computed in the previous step\n');
+    % fprintf('%s',estContactForcesExtWrenchesEst.toString(estimator.model()));
+    
+    % Wrenches values can easily be obtained as matlab vectors
+    %estContactForcesExtWrenchesEst.contactWrench(estimator.model().getLinkIndex('l_foot'),0).contactWrench().getLinearVec3().toMatlab()
+    
+    
+    % LinkContactWrenches is a structure that can contain multiple contact wrench for each link,
+    % but usually is convenient to just deal with a collection of net wrenches for each link
+    linkNetExtWrenches = iDynTree.LinkWrenches(estimator.model());%
+    estContactForcesExtWrenchesEst.computeNetWrenches(linkNetExtWrenches);
+    
+    for i=1:length(framesNames)
+        wrench = linkNetExtWrenches(estimator.model().getFrameLink(estimator.model().getFrameIndex(framesNames{i})));
+        %wrench.toMatlab();
+        externalWrenchData(i,t,:)=wrench.toMatlab();
+        for dsi=1:length(desiredSensorsIndex)
+        ft_h_contactFrame=kinDyn.getRelativeTransform((sensorNames{desiredSensorsIndex(dsi)}),(framesNames{i}));
+        externalWrenchesAtSensorFrame_temp=ft_h_contactFrame.asAdjointTransformWrench.toMatlab()*wrench.toMatlab();
+        externalWrenchesAtSensorFrame.(framesNames{i}).(sensorsToAnalize{dsi})(t,:)=externalWrenchesAtSensorFrame_temp;
+        end
+    end
     jointTorques(t,:)=estJointTorquesExtWrenchesEst.toMatlab();
 end
 for i=1:length(framesNames)
     
-   externalWrenches.(framesNames{i})=squeeze(ftData(i,:,:));
+    externalWrenches.(framesNames{i})=squeeze(externalWrenchData(i,:,:));
 end
 time=dataset.time;

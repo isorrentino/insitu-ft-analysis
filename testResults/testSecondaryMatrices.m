@@ -100,7 +100,7 @@ sensorName={'l_leg_ft_sensor'};
 
 %% Select datasets in which the matrices will be evaluated
 toCompare={'green-iCub-Insitu-Datasets/yoga in loop'};
-toCompareNames={'yoga Loop'}; % short Name of the experiments
+toCompareNames={'yogaLoop'}; % short Name of the experiments
 % toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
 % toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
 
@@ -115,6 +115,7 @@ compareDatasetOptions.filterData=false;
 compareDatasetOptions.estimateWrenches=true;
 compareDatasetOptions.useInertial=false;    
 
+data=struct();
 for c=1:length(toCompare)
     [data.(toCompareNames{c}),estimator,input]=readExperiment(toCompare{c},compareDatasetOptions);
     dataFields=fieldnames(data.(toCompareNames{c}));
@@ -164,19 +165,21 @@ for c=1:length(toCompare)
             cd ../
             if ~withTemperature
             [results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForces,...
-                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime]=...
+                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime,~,...
+                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForcesAtSensorFrame]=...
                 estimateExternalForces... %obtainExternalForces ... %
                 (input.robotName,data.(toCompareNames{c}),sMat,input.sensorNames,...
                 input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),...
-                'sensorsToAnalize',{sensorsToAnalize{j}});
+                'sensorsToAnalize',sensorsToAnalize(j));
             else
                 sensorsExtraCoeff.(sensorsToAnalize{j})=extraCoeff.(names2use{i}).(sensorsToAnalize{j});
                 [results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForces,...
-                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime]=...
+                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime,~,...
+                results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForcesAtSensorFrame]=...
                 estimateExternalForces... %obtainExternalForces ... %
                 (input.robotName,data.(toCompareNames{c}),sMat,input.sensorNames,...
                 input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),...
-                'sensorsToAnalize',{sensorsToAnalize{j}},'extraVar',data.(toCompareNames{c}).temperature,'extraCoeff',sensorsExtraCoeff);                
+                'sensorsToAnalize',sensorsToAnalize(j),'extraVar',data.(toCompareNames{c}).temperature,'extraCoeff',sensorsExtraCoeff);                
             end
             % we restrict the offset to be used to only the sensor we are
             % analizing by passing in sensorstoAnalize only the sensor we
@@ -194,16 +197,6 @@ for c=1:length(toCompare)
     end
     
 end
-
-%% SimpleOddometry init
-% This is to understand which axis from the ft Sensor affects each axis in the evaluation frame 
-odom = iDynTree.SimpleLeggedOdometry();
-odom.setModel(estimator.model());
-jointPos = iDynTree.JointPosDoubleArray(estimator.model());
-odom.updateKinematics(jointPos);
-odom.init('root_link','root_link');
-% Note: we will assume that mapping of the axis is a one to one
-% relationship
 
 %% Evaluate error
 run('evaluateSecondaryMatrixError');
