@@ -16,23 +16,23 @@ function test_estimateCalibrationMatrix
 %     We assume a random non-singular C and a random offset 
     C = rand(6,6);
 %    C = eye(6,6);
-    R = (W)*(inv(C)');
+    R =(W)*(inv(C)');
     [Cest,full_scale] = estimateCalibrationMatrix(R,W);
     assertElementsAlmostEqual(Cest,C);
     Cest
     C
-%     let's lee[ offset simple such that it is easier to debug 
+%     let's have an offset simple such that it is easier to debug 
     offset = (1.0:6.0)';
 %     as we have that:
-%     w = C*r - offset 
+%     w = C*r + offset 
 %     we also have : 
-%     w' = r'*C' + offset' 
+%     w' = r'*C' - offset' 
 %     stacking the row vectors w,r in the datset matrices 
 %     of dimension nSamples \times 6 we have: 
-%     W = R*C'  - repmat(offset',nSamples,1)
+%     W = R*C'  + repmat(offset',nSamples,1)
 %     From which we get, given that C is invertible and inv(C)' = inv(C')
-%    R = (W+repmat(offset',nSamples,1))*(inv(C)') 
-    R = (W+repmat(offset',nSamples,1))*(inv(C)');
+%    R = (W-repmat(offset',nSamples,1))*(inv(C)') 
+    R = (W-repmat(offset',nSamples,1))*(inv(C)');
 %     Now, if we pass R computed in this way we should get C and offset 
     [Cest,full_scale,offsetEst] = estimateCalibrationMatrix(R,W,'estimateoffset',true);
     assertElementsAlmostEqual(Cest,C);
