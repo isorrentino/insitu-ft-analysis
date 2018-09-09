@@ -37,7 +37,7 @@ if (~any(strcmp('secMatrixFormat', optionsFieldNames)))
 end
 if (~any(strcmp('resultEvaluation', optionsFieldNames)))
     checkMatrixOptions.resultEvaluation=true;
-    disp(' Using default value resultEvaluation=iCubDataset');
+    disp(' Using default value resultEvaluation=true');
 end
 %% Check varargin logic
 for v=1:2:length(varargin)

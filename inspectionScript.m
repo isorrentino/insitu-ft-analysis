@@ -9,18 +9,19 @@ addpath utils
 addpath external/quadfit
 
 %experimentName='dataSamples/First_Time_Sensor';%
-%experimentName='green-iCub-Insitu-Datasets/2018_07_10_TZ';
-experimentName='green-iCub-Insitu-Datasets/yoga in loop';
+experimentName='green-iCub-Insitu-Datasets/2018_07_10_LeftYoga';
+% experimentName='green-iCub-Insitu-Datasets/yoga in loop';
 
 
 %Desired inspection sections
 checkSaturation=false;
 sphereReference=false;
 Force3Dspace=false;
-ForceVsTime=true;
-visualizeData=false;
+ForceVsTime=false;
+visualizeData=true;
 PromptForIntervals=false;
 checKJointValues= false;
+compareTemperature=false;
 
 %Experiment conditions to know to what compare
 %options:
@@ -55,7 +56,7 @@ refNames=fieldnames(referenceExp);
 
 %% Read data
 scriptOptions = {};
-scriptOptions.forceCalculation=true;%false;
+scriptOptions.forceCalculation=false;%false;
 if(checkSaturation)
     scriptOptions.raw=true;
 end
@@ -65,7 +66,7 @@ scriptOptions.filterData=true;
 if(strcmp(type,'random'))
     scriptOptions.estimateWrenches=false;
 else
-    scriptOptions.estimateWrenches=true;
+    scriptOptions.estimateWrenches=false;
 end
 scriptOptions.multiSens=true;
 scriptOptions.useInertial=false;
@@ -77,7 +78,7 @@ if any(input.type)
    type=input.type; 
 end
 names=fieldnames(dataset.ftData);
-sensorsToAnalize={'right_leg'};
+sensorsToAnalize={'right_leg';'left_leg'};
 %%
 if(checkSaturation)
     for ftIdx =1:length(sensorsToAnalize)

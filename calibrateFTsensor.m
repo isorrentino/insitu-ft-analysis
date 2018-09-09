@@ -52,11 +52,11 @@ readOptions.matFileName='ftDataset'; % name of the mat file used for save the ex
 readOptions.printPlots=false;%true
     % name and paths of the experiment files
     % change name to desired experiment folder
-   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';
+%    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';
    
-%    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';
+   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
 % experimentName='icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
-% experimentName='/green-iCub-Insitu-Datasets/2018_07_10_TZ';
+% experimentName='/green-iCub-Insitu-Datasets/2018_07_10_LeftYogaWarm';
 [dataset,~,input,extraSample]=readExperiment(experimentName,readOptions);
 
 %% Calibration options
@@ -92,15 +92,13 @@ if extraSampleAvailable
         eSampleID = extraSampleNames{eSampleIDNum};
         if (isstruct(extraSample.(eSampleID)))
             for eSamples=1:length(extraSample.(eSampleID))
-                fprintf(' datasetTouse %i, extrasample %i, sum = %i \n',length(datasetToUse.time),length(extraSample.(eSampleID)(eSamples).time),length(datasetToUse.time)+length(extraSample.(eSampleID)(eSamples).time))
                 datasetToUse=addDatasets(datasetToUse,extraSample.(eSampleID)(eSamples));
-                fprintf(' datasetTouse %i after stacking \n',length(datasetToUse.time))
             end
         end
     end
 end
 [reCalibData,offsetInWrenchSpace,MSE]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
-
+MSE
 %% save results
 %% Save the workspace again to include calib Matrices, scale and offset
 %     %save recalibrated matrices, offsets, new wrenches, sensor serial
