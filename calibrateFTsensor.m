@@ -54,7 +54,8 @@ readOptions.printPlots=false;%true
     % change name to desired experiment folder
 %    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';
    
-   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
+%    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
+    experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_3';
 % experimentName='icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
 % experimentName='/green-iCub-Insitu-Datasets/2018_07_10_LeftYogaWarm';
 [dataset,~,input,extraSample]=readExperiment(experimentName,readOptions);
@@ -75,7 +76,7 @@ end
     %calibration script options
 calibOptions.saveMat=true;
 calibOptions.estimateType=1;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
-calibOptions.useTemperature=true;
+calibOptions.useTemperature=false;
     % Calibrate
 calibrationStep
 
@@ -113,7 +114,10 @@ if(saveResults)
     results.offsetInWrenchSpace=offsetInWrenchSpace;
     results.recalibratedData=reCalibData;
     results.MSE=MSE;
-    save(strcat('data/',experimentName,'/results.mat'),'results')
+    if ~exist(strcat('data/',experimentName,'/results'),'dir')
+        mkdir(strcat('data/',experimentName,'/results'));
+    end
+    save(strcat('data/',experimentName,'/results/results.mat'),'results')
 end
 
     % Plot for inspection of data
