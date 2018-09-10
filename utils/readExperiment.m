@@ -200,8 +200,8 @@ else
         %Convert to radians
         angVel = deg2rad*angVel_temp;
         
-        inertialData.linAcc=linAcc';
-        inertialData.angVel=angVel';
+        inertialData.linAcc=linAcc;
+        inertialData.angVel=angVel;
         
         % Insert into final output
         dataset.inertialData=inertialData;
@@ -323,12 +323,12 @@ else
             %rethrow(ME)
         end
         %Convert to radians
-        skinData.cop=cop_temp';
-        skinData.force=force_temp';
-        skinData.torque=torque_temp';
-        skinData.normalDirection=normalDirection_temp';
-        skinData.wrench=wrench_temp';
-        skinData.geomCenter=geomCenter_temp';
+        skinData.cop=cop_temp;
+        skinData.force=force_temp;
+        skinData.torque=torque_temp;
+        skinData.normalDirection=normalDirection_temp;
+        skinData.wrench=wrench_temp;
+        skinData.geomCenter=geomCenter_temp;
         
         % Insert into final output
         dataset.skinData=skinData;
