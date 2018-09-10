@@ -6,12 +6,22 @@ addpath external/quadfit
 addpath utils
 
 %% read experiment related variables
-% obtain data from all listed experiments
-experimentNames={
-    '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;
+% obtain data from all listed experiments, is better if all experiments
+% belong to the same robot or sensors. This is not a hard constraint though
+
+% experimentNames={ %iCubGenova04 Experiments
+%     '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;
+%     '/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';% Name of the experiment;
+%     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
+%     };
+
+experimentNames={ %iCubGenova02 experiments
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_3';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
     };
 % read experiment options
-readOptions = {};
+readOptions = struct();
 readOptions.forceCalculation=false;%false;
 readOptions.raw=true;
 readOptions.saveData=true;
@@ -25,22 +35,24 @@ readOptions.printPlots=true;%true
 % the sensor in the robot
 % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
 sensorsToAnalize = {'left_leg','right_leg'};
-% lambdas=[0;
-%     10
-%     50;
-%     1000;
-%     10000;
-%     50000;
-%     100000;
-%     500000;
-%     1000000;
-%     5000000;
-%     10000000];
-% lambdas=0;
-
 lambdas=[0;
-    1;    
-    ];
+    1;
+    5;
+    10;
+    50;
+    100;
+    1000;
+    5000;
+    10000;
+    50000;
+    100000;
+    500000;
+    1000000];
+% estimation types
+estimationTypes=[1,2,3,4,1,2,3,4];
+useTempBooleans=[0,0,0,0,1,1,1,1];
+
+% lambdas=0;
 % Create appropiate names for the lambda variables
 for namingIndex=1:length(lambdas)
     if (lambdas(namingIndex)==0)
@@ -50,9 +62,7 @@ for namingIndex=1:length(lambdas)
     end
 end
 lambdasNames=lambdasNames';
-% estimation types
-estimationTypes=[1,4];
-useTempBooleans=[1,1];
+
 for namingIndex=1:length(estimationTypes)
     switch estimationTypes(namingIndex)
         case 1
@@ -75,9 +85,11 @@ end
 combinationNumber=length(experimentNames)*length(lambdas)*length(estimationTypes);
 fullNames{combinationNumber}='';
 MSEvalues(combinationNumber)=struct();
+offstetValues(combinationNumber)=struct();
 for staIdx=1:length(sensorsToAnalize)
     fieldName=sensorsToAnalize{staIdx};
-MSEvalues(combinationNumber).(fieldName)=[0,0,0,0,0];
+    MSEvalues(combinationNumber).(fieldName)=[0,0,0,0,0];
+    offstetValues(combinationNumber).(fieldName)=[0,0,0,0,0];
 end
 %calibration options
 calculate=true;
@@ -91,7 +103,7 @@ checkMatrixOptions.secMatrixFormat=false;
 %%
 counter=1;
 for experimentIndex=1:length(experimentNames)
-    [data.(strcat('e',num2str(experimentIndex))),~,~,data.(strcat('extra',num2str(experimentIndex)))]=readExperiment(experimentNames{experimentIndex},readOptions);
+    [data.(strcat('e',num2str(experimentIndex))),~,input,data.(strcat('extra',num2str(experimentIndex)))]=readExperiment(experimentNames{experimentIndex},readOptions);
     
     if(calculate)
         dataset=data.(strcat('e',num2str(experimentIndex)));
@@ -138,10 +150,14 @@ for experimentIndex=1:length(experimentNames)
                     results.offsetInWrenchSpace=offsetInWrenchSpace;
                     results.recalibratedData=reCalibData;
                     results.MSE=MSE;
-                    save(strcat('data/',experimentName,'/results',lambdaName,'.mat'),'results')
+                    if ~exist(strcat('data/',experimentName,'/results'),'dir')
+                        mkdir(strcat('data/',experimentName,'/results'));
+                    end
+                    save(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'),'results')
                 end
                 fullNames{counter}=strcat('e',num2str(experimentIndex),estimationName,lambdaName);
                 MSEvalues(counter)=MSE;
+                offstetValues(counter)=offsetInWrenchSpace;
                 counter=counter+1;
                 clear results;
             end
@@ -153,3 +169,13 @@ for experimentIndex=1:length(experimentNames)
     end
 end
 fullNames=fullNames';
+if(saveResults)
+    allResults.fullNames=fullNames;
+    allResults.MSEvalues=MSEvalues;
+    allResults.offstetValues=offstetValues;
+    allResults.experimentNames=experimentNames;
+    if ~exist(strcat('data/generalResults'),'dir')
+        mkdir(strcat('data/generalResults'));
+    end
+    save(strcat('data/generalResults/results_',date,'_',input.robotName,'.mat'),'allResults')
+end
