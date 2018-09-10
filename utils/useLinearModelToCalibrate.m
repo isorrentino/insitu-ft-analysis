@@ -240,16 +240,21 @@ for ftIdx =1:length(sensorsToAnalize)
                     meanEst=mean(stackedExpectedWrench);
                     rawToUse=stackedRawtoUse-repmat(meanFt,size(stackedRawtoUse,1),1);
                     expectedWrench=stackedExpectedWrench-repmat(meanEst,size(stackedExpectedWrench,1),1);
+                else
+                    meanFt=mean(rawData.(ft));
+                    meanEst=mean(estimatedFtData.(ft));
+                    rawToUse=rawData.(ft)-repmat(meanFt,size(rawData.(ft),1),1);
+                    expectedWrench=estimatedFtData.(ft)-repmat(meanEst,size(estimatedFtData.(ft),1),1);
                 end
-                 [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});            
+                [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
                 if sum(tempCoeff)~=0
                     offsetInForce=meanEst'-calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft));
                 else
                     offsetInForce=meanEst'-calibMatrices.(ft)*meanFt';
                 end
             else % full one shot
-            [calibMatrices.(ft),fullscale.(ft),offsetInForce,tempCoeff]=...
-                estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
+                [calibMatrices.(ft),fullscale.(ft),offsetInForce,tempCoeff]=...
+                    estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
             end
             offset.(ft)=calibMatrices.(ft)\offsetInForce;
             %% correct dimensions of the offset if needed after estimation
@@ -261,6 +266,10 @@ for ftIdx =1:length(sensorsToAnalize)
     end
     if sum(tempCoeff)~=0
         temperatureCoefficients.(ft)=tempCoeff;
+    end
+    clear rawToUse expectedWrench;
+    if exist('meanEst','var')
+        clear meanEst meanFt;
     end
 end
 if estimationType==0 % only interested in the insitu offset
