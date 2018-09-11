@@ -16,9 +16,10 @@ addpath utils
 %     };
 
 experimentNames={ %iCubGenova02 experiments
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_3';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
     };
 % read experiment options
 readOptions = struct();
@@ -49,8 +50,8 @@ lambdas=[0;
     500000;
     1000000];
 % estimation types
-estimationTypes=[1,2,3,4,1,2,3,4];
-useTempBooleans=[0,0,0,0,1,1,1,1];
+estimationTypes=[1,1,3,3];
+useTempBooleans=[0,1,0,1];
 
 % lambdas=0;
 % Create appropiate names for the lambda variables
@@ -133,6 +134,7 @@ for experimentIndex=1:length(experimentNames)
                 calibOptions.estimateType=estimationTypes(type);%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
                 calibOptions.useTemperature=useTempBooleans(type);
                 estimationName=estimationNames{type};
+                disp(strcat(estimationName,lambdaName));
                 % calibrate
                 calibrationStep
                 % check performance in the data set
@@ -157,7 +159,7 @@ for experimentIndex=1:length(experimentNames)
                 end
                 fullNames{counter}=strcat('e',num2str(experimentIndex),estimationName,lambdaName);
                 MSEvalues(counter)=MSE;
-                offstetValues(counter)=offsetInWrenchSpace;
+                offsetValues(counter)=offsetInWrenchSpace;
                 counter=counter+1;
                 clear results;
             end
@@ -168,14 +170,33 @@ for experimentIndex=1:length(experimentNames)
         clear datasetToUse;
     end
 end
-fullNames=fullNames';
-if(saveResults)
-    allResults.fullNames=fullNames;
-    allResults.MSEvalues=MSEvalues;
-    allResults.offstetValues=offstetValues;
-    allResults.experimentNames=experimentNames;
-    if ~exist(strcat('data/generalResults'),'dir')
-        mkdir(strcat('data/generalResults'));
-    end
-    save(strcat('data/generalResults/results_',date,'_',input.robotName,'.mat'),'allResults')
-end
+
+% convert to matrix for applying math operations
+mseValuesArray=struct2array(MSEvalues);
+mseValues=reshape(mseValuesArray,length(sensorsToAnalize)*6,length(mseValuesArray)/(length(sensorsToAnalize)*6));
+mseValues=mseValues'; % each 6 columns is a sensor
+
+offsetValuesArray=struct2array(offsetValues);
+offsetValuesArray=offsetValuesArray';
+OffsetValues=[offsetValuesArray(1:2:end,:) offsetValuesArray(2:2:end,:)];
+ % each 6 columns is a sensor
+
+
+ fullNames=fullNames';
+ if(saveResults)
+     allResults.fullNames=fullNames;
+     for sta=1:length(sensorsToAnalize)
+         sensor=sensorsToAnalize{sta};
+         allResults.MSEvalues.(sensor)=mseValues(:,(sta-1)*6+1:sta*6);
+         allResults.offsetValues.(sensor)=OffsetValues(:,(sta-1)*6+1:sta*6);
+     end
+     
+     %     allResults.MSEvalues=MSEvalues;
+     %     allResults.offsetValues=offsetValues;
+     allResults.experimentNames=experimentNames;
+     if ~exist(strcat('data/generalResults'),'dir')
+         mkdir(strcat('data/generalResults'));
+     end
+     save(strcat('data/generalResults/results_',date,'_',input.robotName,'.mat'),'allResults')
+ end
+
