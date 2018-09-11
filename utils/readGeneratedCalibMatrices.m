@@ -21,7 +21,7 @@ for i=1:length(experimentNames)
     cMat.(names2use{1})=WorkbenchMat; %first dataset to compare is the orignal workbench
 
     for lam=1:length(calibrationFileNames)
-        (names2use{(i-1)*length(calibrationFileNames)+1+lam})
+        (names2use{(i-1)*length(calibrationFileNames)+1+lam});
         for j=1:length(sensorsToAnalize)
             sIndx= find(strcmp(ftNames,sensorsToAnalize{j}));
             cMat.(names2use{(i-1)*length(calibrationFileNames)+1+lam}).(sensorsToAnalize{j}) = readCalibMat(strcat(prefixDir,'data/',experimentNames{i},'/calibrationMatrices/',input.calibMatFileNames{sIndx},calibrationFileNames{lam}));
