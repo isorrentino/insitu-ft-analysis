@@ -164,7 +164,7 @@ estimator.loadModelAndSensorsFromFile(strcat('./robots/',robotName,'.urdf'));
 
 % Create KinDynComputations class variable
 kinDyn = iDynTree.KinDynComputations();
-kinDyn.loadRobotModel(estimator.model)
+kinDyn.loadRobotModel(estimator.model);
 
 % Check if the model was correctly created by printing the model
 %estimator.model().toString()
@@ -186,7 +186,7 @@ if (useInertial)
 end
 if (length(contactFrameName)==1)
     % Set the contact information in the estimator
-    disp(strcat('using contact frame',{' '},char(contactFrameName)));
+    disp(strcat('estimateExternalForces:using contact frame',{' '},char(contactFrameName)));
     contact_index = estimator.model().getFrameIndex(char(contactFrameName));
 end
 
