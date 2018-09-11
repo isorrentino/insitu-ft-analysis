@@ -21,16 +21,17 @@ scriptOptions.printAll=true;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';% Name of the experiment;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     }; %this set is from iCubGenova04
-experimentNames={
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid';% Name of the experiment;    
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_3';% Name of the experiment;    
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
-    }; % this set is from iCubGenova02
+experimentNames={ %iCubGenova02 experiments
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
+    };
 names={'Workbench';
-    'coldSession';
+    'grid';
     %'decemberNoTemp';
-    'warmSession';
-    'coldAndWarmSession';
+    'leftYoga';
+%     'mixedDataset';
     };% except for the first one all others are short names for the expermients in experimentNames
 
 % lambdas=[1];
@@ -50,8 +51,10 @@ lambdas=[0;
     500000;
     1000000];
 % estimation types
-estimationTypes=[1,2,3,4,1,2,3,4];
-useTempBooleans=[0,0,0,0,1,1,1,1];
+% estimationTypes=[1,2,3,4,1,2,3,4];
+% useTempBooleans=[0,0,0,0,1,1,1,1];
+estimationTypes=[1,1,3,3];
+useTempBooleans=[0,1,0,1];
 % Create appropiate names for the lambda variables
 for namingIndex=1:length(lambdas)
     if (lambdas(namingIndex)==0)
@@ -125,7 +128,7 @@ sensorName={'l_leg_ft_sensor'};
 % %% Select datasets in which the matrices will be evaluated
 
 toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
-toCompareNames={'39DegreeGrid','39DegreeTz','39DegreeLeftYoga','39DegreeRightYoga'}; % short Name of the experiments for iCubGenova02
+toCompareNames={'Grid39Degree','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
 
 % toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
 % toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
@@ -163,8 +166,12 @@ for c=1:length(toCompare)
     %iCubVizWithSlider(data.(toCompareNames{c}),robotName,sensorsToAnalize,input.contactFrameName{1},onTestDir);
     
     %% Calculate offsets for each secondary matrix for each comparison dataset
-    sampleInit=[40,40];
-    sampleEnd=[60,60];
+    sampleInit=[40,40,1040,1040];
+    sampleEnd=[60,60,1060,1060];
+    if length(toCompareNames)~=length(sampleInit) || length(toCompareNames)~=length(sampleEnd)
+        error('testSecondaryMatrices: begining and end of the samples in which the offset will be calculated should be provided for all data sets to compare');
+        
+    end
     % subsample dataset to speed up computations
     for i=1:length(names2use)
         [offset.(toCompareNames{c}).(names2use{i})]=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{i}));
