@@ -22,16 +22,16 @@ scriptOptions.printAll=true;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     }; %this set is from iCubGenova04
 experimentNames={ %iCubGenova02 experiments
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
 %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
-%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
     };
 names={'Workbench';
-    'grid';
+%     'grid';
     %'decemberNoTemp';
-    'leftYoga';
-%     'mixedDataset';
+%     'leftYoga';
+    'mixedDataset';
     };% except for the first one all others are short names for the expermients in experimentNames
 
 % lambdas=[1];
@@ -230,6 +230,27 @@ for c=1:length(toCompare)
     end
     
 end
+%% Save external forces
+extForceResults.results=stackedResults;
+extForceResults.lambdas=lambdas;
+extForceResults.estimationTypes=estimationTypes;
+extForceResults.useTempBooleans=useTempBooleans;
+extForceResults.names.names2use=names2use;
+extForceResults.names.toCompare=toCompareNames;
+extForceResults.names.experimentNames=names;
+extForceResults.toCompare=toCompare;
+extForceResults.experimentNames=experimentNames;
+if strfind(pwd,'testResults')>0  
+    prefix='../';
+else
+    prefix='';
+    
+end
+if ~exist(strcat(prefix,'data/generalResults'),'dir')
+    mkdir(strcat(prefix,'data/generalResults'));
+    
+end
 
+save(strcat(prefix,'data/generalResults/extForceResults_',date,'_',input.robotName,'.mat'),'extForceResults')
 %% Evaluate error
 run('evaluateSecondaryMatrixError');
