@@ -87,6 +87,6 @@ for j=1:length(sensorName)
 end
 
 if plotResults
-    FTplots(newData,stackedResults.(sensorsToAnalize{j}).(names2use{minIndall}).eForcesTime,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, comparisonData,'Best General');
-    FTplots(frankieData,stackedResults.(sensorsToAnalize{j}).(names2use{minIndall}).eForcesTime,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, comparisonData,'Best axis');
+    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2use{minIndall}).eForcesTime,'Best General');
+    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2use{minIndall}).eForcesTime,'Best axis');
 end
