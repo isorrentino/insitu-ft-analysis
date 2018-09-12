@@ -31,11 +31,11 @@ for v=1:2:length(varargin)
                     if islogical(tempV)
                         offsetIsInRawSpace=tempV;
                     else
-                             warning('recalibrateData: expected a boolean variable for option OffsetIsRaw, ignoring');                      
-                    end            
+                        warning('recalibrateData: expected a boolean variable for option OffsetIsRaw, ignoring');
+                    end
                 case {'Offset','offset','OFFSET'}
                     if isvector(tempV)
-                        if (sum(size(tempV)) ==(outputSize+1) && (size(tempV,1)==outputSize || size(tempV,2)==outputSize) )                            
+                        if (sum(size(tempV)) ==(outputSize+1) && (size(tempV,1)==outputSize || size(tempV,2)==outputSize) )
                             if size(tempV,2)==outputSize
                                 offset=tempV';
                             else
@@ -86,7 +86,7 @@ for v=1:2:length(varargin)
         end
     else
         % since we already skipped make skip false again
-        skip=false;        
+        skip=false;
     end
 end
 %extra logic
@@ -94,13 +94,14 @@ if  extraLinearVariablesNumber==0 || isempty(extraLinearVariables)
     extraLinearVariables=zeros(numberOfSamples,1);
     extraCoeff=extraCoeffDefaultValue;
 end
-for sample=1:length(rawData)
-    if ~offsetIsInRawSpace
-        recalibratedData(sample,:)=calibrationMatrix*rawData(sample,:)'+offset+extraCoeff*extraLinearVariables(sample,:)';
-    else
-        recalibratedData(sample,:)=calibrationMatrix*(rawData(sample,:)'+offset)+extraCoeff*extraLinearVariables(sample,:)';
-    end
+
+if ~offsetIsInRawSpace
+    recalibratedData=calibrationMatrix*rawData'+offset+extraCoeff*extraLinearVariables';
+else
+    recalibratedData=calibrationMatrix*(rawData'+offset)+extraCoeff*extraLinearVariables';
 end
+recalibratedData=recalibratedData';
+
 if offsetIsInRawSpace
     offsetInForce=calibrationMatrix*offset;
 else
