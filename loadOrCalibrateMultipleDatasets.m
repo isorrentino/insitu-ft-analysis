@@ -14,11 +14,16 @@ addpath utils
 %     '/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';% Name of the experiment;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     };
+experimentNames={
+%     '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;
+%     'green-iCub-Insitu-Datasets/2018_07_10_LeftYoga';% Name of the experiment;
+%     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
+    }; %this set is from iCubGenova04
 
 experimentNames={ %iCubGenova02 experiments
     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
+%         '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
     };
 % read experiment options
@@ -35,25 +40,25 @@ readOptions.printPlots=true;%true
 % Select sensors to calibrate the names are associated to the location of
 % the sensor in the robot
 % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-sensorsToAnalize = {'left_leg','right_leg'};
-lambdas=[0;
-    1;
-    5;
-    10;
-    50;
-    100;
-    1000;
-    5000;
-    10000;
-    50000;
-    100000;
-    500000;
-    1000000];
-% estimation types
+sensorsToAnalize = {'right_leg'};
+% lambdas=[0;
+%     1;
+%     5;
+%     10;
+%     50;
+%     100;
+%     1000;
+%     5000;
+%     10000;
+%     50000;
+%     100000;
+%     500000;
+%     1000000];
+% estimation types/
 estimationTypes=[1,1,3,3];
 useTempBooleans=[0,1,0,1];
 
-% lambdas=0;
+lambdas=0;
 % Create appropiate names for the lambda variables
 for namingIndex=1:length(lambdas)
     if (lambdas(namingIndex)==0)
@@ -84,13 +89,14 @@ for namingIndex=1:length(estimationTypes)
 end
 %
 combinationNumber=length(experimentNames)*length(lambdas)*length(estimationTypes);
-fullNames{combinationNumber}='';
+fullNames{combinationNumber}={''};
 MSEvalues(combinationNumber)=struct();
 offstetValues(combinationNumber)=struct();
 for staIdx=1:length(sensorsToAnalize)
     fieldName=sensorsToAnalize{staIdx};
     MSEvalues(combinationNumber).(fieldName)=[0,0,0,0,0];
     offstetValues(combinationNumber).(fieldName)=[0,0,0,0,0];
+    temperatureCoeffs(combinationNumber).(fieldName)=[0;0;0;0;0];
 end
 %calibration options
 calculate=true;
@@ -98,6 +104,7 @@ calibOptions.saveMat=true;
 calibOptions.estimateType=1;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
 calibOptions.useTemperature=true;
 % checking options
+evaluate=true;
 checkMatrixOptions.plotForceSpace=false;
 checkMatrixOptions.plotForceVsTime=false;
 checkMatrixOptions.secMatrixFormat=false;
@@ -106,7 +113,7 @@ counter=1;
 for experimentIndex=1:length(experimentNames)
     [data.(strcat('e',num2str(experimentIndex))),~,input,data.(strcat('extra',num2str(experimentIndex)))]=readExperiment(experimentNames{experimentIndex},readOptions);
     
-    if(calculate)
+    if(calculate || evaluate)
         dataset=data.(strcat('e',num2str(experimentIndex)));
         extraSample=data.(strcat('extra',num2str(experimentIndex)));
         experimentName=experimentNames{experimentIndex};
@@ -134,34 +141,68 @@ for experimentIndex=1:length(experimentNames)
                 calibOptions.estimateType=estimationTypes(type);%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
                 calibOptions.useTemperature=useTempBooleans(type);
                 estimationName=estimationNames{type};
-                disp(strcat(estimationName,lambdaName));
+                disp(strcat('e',num2str(experimentIndex),estimationName,lambdaName));
                 % calibrate
-                calibrationStep
-                % check performance in the data set
-                [reCalibData,offsetInWrenchSpace,MSE]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
-                %% Save the workspace again to include calib Matrices, scale and offset
-                %     %save recalibrated matrices, offsets, new wrenches, sensor serial
-                %     numbers
-                saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
-                if(saveResults)
-                    results.usedDataset=datasetToUse;
-                    results.calibrationMatrices=calibMatrices;
-                    results.fullscale=fullscale;
-                    results.offset=offset;
-                    results.temperatureCoeff=temperatureCoeff;
-                    results.offsetInWrenchSpace=offsetInWrenchSpace;
-                    results.recalibratedData=reCalibData;
-                    results.MSE=MSE;
-                    if ~exist(strcat('data/',experimentName,'/results'),'dir')
-                        mkdir(strcat('data/',experimentName,'/results'));
-                    end
-                    save(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'),'results')
+                if calculate
+                    calibrationStep
                 end
-                fullNames{counter}=strcat('e',num2str(experimentIndex),estimationName,lambdaName);
-                MSEvalues(counter)=MSE;
-                offsetValues(counter)=offsetInWrenchSpace;
-                counter=counter+1;
-                clear results;
+                % check performance in the data set
+                if evaluate
+                    somethingToCheck=true;
+                    saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
+                    if ~exist('calibMatrices','var')
+                        if exist(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'),'file')
+                        load(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'));
+                        %%TODO: add checking if all sensors to analize are in the results structure
+                        calibMatrices=results.calibrationMatrices;
+                        offset=results.offset;
+                        resultsFields=fieldnames(results);
+                        if ismember('temperatureCoeff',resultsFields)
+                            temperatureCoeff=results.temperatureCoeff;
+                        end
+                        saveResults=false;
+                        else
+                            fprintf('loadOrCalibrateMultipleDatasets: Nothing to do no results and no calculation done for %s %s %s',strcat('e',num2str(experimentIndex)),estimationName,lambdaName );
+                           somethingToCheck=false;
+                            continue;
+                        end
+                    end
+                    if somethingToCheck
+                    [reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+%                     [reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+                   
+                    end
+                    %% Save the workspace again to include calib Matrices, scale and offset
+                    %     %save recalibrated matrices, offsets, new wrenches, sensor serial
+                    %     numbers
+                    
+                    if(saveResults && evaluate)
+                        results.usedDataset=datasetToUse;
+                        results.calibrationMatrices=calibMatrices;
+                        results.fullscale=fullscale;
+                        results.offset=offset;
+                        results.temperatureCoeff=temperatureCoeff;
+                        results.offsetInWrenchSpace=offsetInWrenchSpace;
+                        results.recalibratedData=reCalibData;
+                        results.MSE=MSE;
+                        results.MSE_p=MSE_p;
+                        if ~exist(strcat('data/',experimentName,'/results'),'dir')
+                            mkdir(strcat('data/',experimentName,'/results'));
+                        end
+                        save(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'),'results')
+                    end
+                    fullNames{counter}=strcat('e',num2str(experimentIndex),estimationName,lambdaName);
+                    MSEvalues(counter)=MSE;
+                    MSEvalues_p(counter)=MSE_p;
+                    offsetValues(counter)=offsetInWrenchSpace;
+                    calibrationMatrices(counter)=calibMatrices;
+                    if ~isempty(temperatureCoeff)
+                    temperatureCoeffs(counter)=temperatureCoeff;
+                    end
+                    counter=counter+1;
+                    clear results;
+                    clear calibMatrices;
+                end
             end
         end
         clear dataset;
@@ -170,33 +211,44 @@ for experimentIndex=1:length(experimentNames)
         clear datasetToUse;
     end
 end
+if (evaluate)
+    % convert to matrix for applying math operations
+    mseValuesArray=struct2array(MSEvalues);
+    mseValues=reshape(mseValuesArray,length(sensorsToAnalize)*6,length(mseValuesArray)/(length(sensorsToAnalize)*6));
+    mseValues=mseValues'; % each 6 columns is a sensor
+    
+    mseValuesArray_p=struct2array(MSEvalues_p);
+    mseValues_p=reshape(mseValuesArray_p,length(sensorsToAnalize)*6,length(mseValuesArray_p)/(length(sensorsToAnalize)*6));
+    mseValues_p=mseValues_p'; % each 6 columns is a sensor
+    
+    offsetValuesArray=struct2array(offsetValues);
+    offsetValuesArray=offsetValuesArray';
+    OffsetValues=[offsetValuesArray(1:2:end,:) offsetValuesArray(2:2:end,:)];
+    % each 6 columns is a sensor
+    
+    
+    fullNames=fullNames';
+     saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
+    if(saveResults )
+        allResults.fullNames=fullNames;
+        for sta=1:length(sensorsToAnalize)
+            sensor=sensorsToAnalize{sta};
+            allResults.MSEvalues.(sensor)=mseValues(:,(sta-1)*6+1:sta*6);
+            allResults.MSEvalues_p.(sensor)=mseValues_p(:,(sta-1)*6+1:sta*6);
+            allResults.offsetValues.(sensor)=OffsetValues(:,(sta-1)*6+1:sta*6);
+        end
+        
+        %     allResults.MSEvalues=MSEvalues;
+        %     allResults.offsetValues=offsetValues;
+        allResults.experimentNames=experimentNames;
+        allResults.calibrationMatrices=calibrationMatrices;
+        allResults. temperatureCoeffs= temperatureCoeffs;
+        if ~exist(strcat('data/generalResults'),'dir')
+            mkdir(strcat('data/generalResults'));
+        end
+        save(strcat('data/generalResults/results_',date,'_',input.robotName,'.mat'),'allResults')
+    end
+end
 
-% convert to matrix for applying math operations
-mseValuesArray=struct2array(MSEvalues);
-mseValues=reshape(mseValuesArray,length(sensorsToAnalize)*6,length(mseValuesArray)/(length(sensorsToAnalize)*6));
-mseValues=mseValues'; % each 6 columns is a sensor
-
-offsetValuesArray=struct2array(offsetValues);
-offsetValuesArray=offsetValuesArray';
-OffsetValues=[offsetValuesArray(1:2:end,:) offsetValuesArray(2:2:end,:)];
- % each 6 columns is a sensor
-
-
- fullNames=fullNames';
- if(saveResults)
-     allResults.fullNames=fullNames;
-     for sta=1:length(sensorsToAnalize)
-         sensor=sensorsToAnalize{sta};
-         allResults.MSEvalues.(sensor)=mseValues(:,(sta-1)*6+1:sta*6);
-         allResults.offsetValues.(sensor)=OffsetValues(:,(sta-1)*6+1:sta*6);
-     end
-     
-     %     allResults.MSEvalues=MSEvalues;
-     %     allResults.offsetValues=offsetValues;
-     allResults.experimentNames=experimentNames;
-     if ~exist(strcat('data/generalResults'),'dir')
-         mkdir(strcat('data/generalResults'));
-     end
-     save(strcat('data/generalResults/results_',date,'_',input.robotName,'.mat'),'allResults')
- end
-
+% checking the difference in mse values
+%difference=mseValues(2:2:end,:)-mseValues(1:2:end,:)
