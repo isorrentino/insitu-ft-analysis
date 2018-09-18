@@ -14,18 +14,18 @@ addpath utils
 %     '/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';% Name of the experiment;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     };
-experimentNames={
-%     '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;
-%     'green-iCub-Insitu-Datasets/2018_07_10_LeftYoga';% Name of the experiment;
-%     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
-    }; %this set is from iCubGenova04
-
 experimentNames={ %iCubGenova02 experiments
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
-%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
-%         '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
     };
+
+% experimentNames={ %iCubGenova02 experiments
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
+% %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_left_yoga';% Name of the experiment;
+% %         '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
+%     };
 % read experiment options
 readOptions = struct();
 readOptions.forceCalculation=false;%false;
@@ -40,52 +40,33 @@ readOptions.printPlots=true;%true
 % Select sensors to calibrate the names are associated to the location of
 % the sensor in the robot
 % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-sensorsToAnalize = {'right_leg'};
-% lambdas=[0;
+sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
+ lambdas=[
+%      0;
 %     1;
-%     5;
-%     10;
+     5;
+     10;
 %     50;
-%     100;
-%     1000;
-%     5000;
+     100;
+     1000;
+     5000;
 %     10000;
 %     50000;
-%     100000;
-%     500000;
-%     1000000];
+     100000;
+     500000;
+%     1000000
+];
 % estimation types/
-estimationTypes=[1,1,3,3];
-useTempBooleans=[0,1,0,1];
+estimationTypes=[1,1,3,3,4,4];
+useTempBooleans=[0,1,0,1,0,1];
 
-lambdas=0;
+% lambdas=0;
 % Create appropiate names for the lambda variables
-for namingIndex=1:length(lambdas)
-    if (lambdas(namingIndex)==0)
-        lambdasNames{namingIndex}='';
-    else
-        lambdasNames{namingIndex}=strcat('_l',num2str(lambdas(namingIndex)));
-    end
-end
-lambdasNames=lambdasNames';
-
-for namingIndex=1:length(estimationTypes)
-    switch estimationTypes(namingIndex)
-        case 1
-            name='_sphere_offset';
-        case 2
-            name='_noMeanOnMain_offset';
-        case 3
-            name='_noMean_offset';
-        case 4
-            name='_oneShot_offset';
-    end
-    if useTempBooleans(namingIndex)
-        name=strcat(name,'_temp');
-    else
-        name=strcat(name,'_noTemp');
-    end
-    estimationNames{namingIndex}=name;
+lambdasNames=generateLambdaNames(lambdas);
+if ~exist('estimationTypes','var')
+    estimationNames={''};
+else
+estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans);
 end
 %
 combinationNumber=length(experimentNames)*length(lambdas)*length(estimationTypes);
@@ -175,7 +156,7 @@ for experimentIndex=1:length(experimentNames)
                     %% Save the workspace again to include calib Matrices, scale and offset
                     %     %save recalibrated matrices, offsets, new wrenches, sensor serial
                     %     numbers
-                    
+                    saveResults=false;
                     if(saveResults && evaluate)
                         results.usedDataset=datasetToUse;
                         results.calibrationMatrices=calibMatrices;
@@ -223,7 +204,10 @@ if (evaluate)
     
     offsetValuesArray=struct2array(offsetValues);
     offsetValuesArray=offsetValuesArray';
-    OffsetValues=[offsetValuesArray(1:2:end,:) offsetValuesArray(2:2:end,:)];
+    OffsetValues=offsetValuesArray(1:length(sensorsToAnalize):end,:);
+    for sa=2:length(sensorsToAnalize)
+    OffsetValues=[OffsetValues offsetValuesArray(sa:length(sensorsToAnalize):end,:)];
+    end
     % each 6 columns is a sensor
     
     
