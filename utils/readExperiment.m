@@ -134,9 +134,9 @@ else
                 portName= input.ftPortName{i};
             end
             switch portName
-                case {'analog'}
+                case {'analog','analog_o'}
                     input.ftPortType{index}='forceTorque';
-                case {'measures'}
+                case {'measures','measures_o'}
                     input.ftPortType{index}='multipleSensors';
             end
         end
@@ -284,6 +284,9 @@ else
     end
     %% Calculate raw data using known calibration matrix
     if(scriptOptions.raw)
+        if scriptOptions.testDir
+            cd ../
+        end
         disp( 'readExperiment: Calculating raw FT values');
         if (any(strcmp('calibFlag', fieldnames(input))))
             [dataset.rawData,cMat]=getRawData(dataset.ftData,input.calibMatPath,input.calibMatFileNames,input.calibFlag);
@@ -295,6 +298,9 @@ else
             [dataset.rawDataFiltered]=getRawData(dataset.filteredFtData,cMat);
         end
         dataset.calibMatFileNames=input.calibMatFileNames;
+        if scriptOptions.testDir
+            cd testResults
+        end
     end
     
     %% Load skin events information
