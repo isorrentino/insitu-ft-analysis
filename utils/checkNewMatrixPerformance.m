@@ -6,10 +6,11 @@ function [reCalibData,offsetInWrenchSpace,varargout]=checkNewMatrixPerformance(d
 dataFields=fieldnames(datasetToUse);
 otherCoeff=[];
 otherCoeffVarName={};
-if (~any(strcmp('rawData', dataFields)))    
+isRawOffset=true;
+if (~any(strcmp('rawData', dataFields)))
     error(' %s field required','rawData');
 end
-if (~any(strcmp('estimatedFtData', dataFields)))    
+if (~any(strcmp('estimatedFtData', dataFields)))
     error(' %s field required','estimatedFtData');
 end
 if (~any(strcmp('filteredFtData', dataFields)))
@@ -25,19 +26,19 @@ end
 optionsFieldNames=fieldnames(checkMatrixOptions);
 if (~any(strcmp('plotForceSpace', optionsFieldNames)))
     checkMatrixOptions.plotForceSpace=false;
-    disp(' Using default value plotForceSpace=false');
+    disp('checkNewMatrixPerformance: Using default value plotForceSpace=false');
 end
 if (~any(strcmp('plotForceVsTime', optionsFieldNames)))
     checkMatrixOptions.plotForceVsTime=false;
-    disp(' Using default value plotForceVsTime=false');
+    disp('checkNewMatrixPerformance: Using default value plotForceVsTime=false');
 end
 if (~any(strcmp('secMatrixFormat', optionsFieldNames)))
     checkMatrixOptions.secMatrixFormat=false;
-    disp(' Using default value secMatrixFormat=false');
+    disp('checkNewMatrixPerformance: Using default value secMatrixFormat=false');
 end
 if (~any(strcmp('resultEvaluation', optionsFieldNames)))
     checkMatrixOptions.resultEvaluation=true;
-    disp(' Using default value resultEvaluation=true');
+    disp('checkNewMatrixPerformance: Using default value resultEvaluation=true');
 end
 %% Check varargin logic
 for v=1:2:length(varargin)
@@ -69,6 +70,12 @@ for v=1:2:length(varargin)
                         
                     end
                 end
+            case {'offsetIsInRawSpace','OffsetIsRaw','offsetisraw','OFFSETISRAW','rawOffset','isRawOffset'}
+                if islogical(tempV)
+                    isRawOffset=tempV;
+                else
+                    warning('checkNewMatrixPerformance: expected a boolean variable for option OffsetIsRaw, ignoring');
+                end
         end
     end
 end
@@ -86,7 +93,12 @@ for ftIdx =1:length(sensorsToAnalize)
         recabnarin=recabnarin+4;
     end
     [reCalibData.(ft),offsetInWrenchSpace.(ft)]=recalibrateData(datasetToUse.rawData.(ft),calibMatrices.(ft),...
-        'offset',offset.(ft),recabInput{:});
+        'offset',offset.(ft),'isRawOffset',isRawOffset,recabInput{:});
+    % take out offset in the filtered data for comparison
+    %             filteredOffset.(ft)=(datasetToUse.cMat.(ft)*offset.(ft)')';
+    filteredOffset.(ft)=mean(datasetToUse.filteredFtData.(ft)- datasetToUse.estimatedFtData.(ft)) ;
+    filteredNoOffset.(ft)=datasetToUse.filteredFtData.(ft) -repmat(filteredOffset.(ft),size(datasetToUse.filteredFtData.(ft),1),1);
+    
     
     %% Plotting section
     % plot 3D graph
@@ -95,8 +107,6 @@ for ftIdx =1:length(sensorsToAnalize)
             namesdatasets={'estimatedData','reCalibratedData'};
             force3DPlots(namesdatasets,(ft),datasetToUse.estimatedFtData.(ft),reCalibData.(ft));
         else
-            filteredOffset.(ft)=(datasetToUse.cMat.(ft)*offset.(ft)')';
-            filteredNoOffset.(ft)=datasetToUse.filteredFtData.(ft) -repmat(filteredOffset.(ft),size(datasetToUse.filteredFtData.(ft),1),1);
             namesdatasets={'measuredDataNoOffset','estimatedData','reCalibratedData'};
             force3DPlots(namesdatasets,(ft),filteredNoOffset.(ft),datasetToUse.estimatedFtData.(ft),reCalibData.(ft));
         end
@@ -118,12 +128,13 @@ for ftIdx =1:length(sensorsToAnalize)
     %% Evaluation of results
     if (checkMatrixOptions.resultEvaluation)
         %disp(ft)
-        %Workbench_no_offset_mse=mean((filteredNoOffset.(ft)-modifiedDataset.estimatedFtData.(ft)).^2)
+        Workbench_no_offset_mse=mean((filteredNoOffset.(ft)-datasetToUse.estimatedFtData.(ft)).^2);
         New_calibration_no_offset_mse.(ft)=mean((reCalibData.(ft)-datasetToUse.estimatedFtData.(ft)).^2);
-        %Workbench_mse=mean((modifiedDataset.ftData.(ft)-modifiedDataset.estimatedFtData.(ft)).^2)
+        MSE_percentage.(ft)=(1-(New_calibration_no_offset_mse.(ft)./Workbench_no_offset_mse))*100;
     end
 end
 if exist('New_calibration_no_offset_mse','var')
-   varargout{1}= New_calibration_no_offset_mse;    
+    varargout{1}= New_calibration_no_offset_mse;
+    varargout{2}= MSE_percentage;
 end
 
