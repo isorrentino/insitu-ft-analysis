@@ -34,3 +34,4 @@ You can download the https://gitlab.com/dynamic-interaction-control/green-iCub-I
 ~~~
 git clone https://gitlab.com/dynamic-interaction-control/green-iCub-Insitu-Datasets ./data/green-iCub-Insitu-Datasets
 ~~~
+**Note**: given the size of this repositories ( over 50Gb ), most likely is only desired to pick some of them and not all. For doing this instructions can be found [here](https://stackoverflow.com/questions/4114887/is-it-possible-to-do-a-sparse-checkout-without-checking-out-the-whole-repository).
