@@ -45,7 +45,7 @@ addpath utils
 readOptions = {};
 readOptions.forceCalculation=false;%false;
 readOptions.raw=true;
-readOptions.saveData=true;
+readOptions.saveData=false;
 readOptions.multiSens=true;
 readOptions.matFileName='ftDataset'; % name of the mat file used for save the experiment data
     % options not from read experiment
@@ -54,8 +54,8 @@ readOptions.printPlots=false;%true
     % change name to desired experiment folder
 %    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';
    
-%    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
-    experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_3';
+   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
+%    experimentName= '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2';% Name of the experiment;
 % experimentName='icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
 % experimentName='/green-iCub-Insitu-Datasets/2018_07_10_LeftYogaWarm';
 [dataset,~,input,extraSample]=readExperiment(experimentName,readOptions);
@@ -66,7 +66,7 @@ readOptions.printPlots=false;%true
     % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
 sensorsToAnalize = {'right_leg','left_leg'};
     %Regularization parameter
-lambda=1;
+lambda=1000;
 if (lambda==0)
     lambdaName='';
 else
@@ -76,7 +76,7 @@ end
     %calibration script options
 calibOptions.saveMat=true;
 calibOptions.estimateType=1;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
-calibOptions.useTemperature=false;
+calibOptions.useTemperature=true;
     % Calibrate
 calibrationStep
 
@@ -98,8 +98,9 @@ if extraSampleAvailable
         end
     end
 end
-[reCalibData,offsetInWrenchSpace,MSE]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+[reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
 MSE
+MSE_p
 %% save results
 %% Save the workspace again to include calib Matrices, scale and offset
 %     %save recalibrated matrices, offsets, new wrenches, sensor serial
