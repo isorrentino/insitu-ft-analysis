@@ -20,16 +20,16 @@ extraLinearVariables=[];
 extraCoeffDefaultValue=zeros(outputSize,1);
 offset=zeros(outputSize,1);
 skip=false;
-offsetIsInRawSpace=true;
+isRawOffset=true;
 %% varargin logic
 for v=1:2:length(varargin)
     if ~skip
         if(ischar(  varargin{v}))
             tempV=varargin{v+1};
             switch varargin{v}
-                case {'offsetIsInRawSpace','OffsetIsRaw','offsetisraw','OFFSETISRAW'}
+                case {'offsetIsInRawSpace','OffsetIsRaw','offsetisraw','OFFSETISRAW','rawOffset','isRawOffset'}
                     if islogical(tempV)
-                        offsetIsInRawSpace=tempV;
+                        isRawOffset=tempV;
                     else
                         warning('recalibrateData: expected a boolean variable for option OffsetIsRaw, ignoring');
                     end
@@ -95,14 +95,14 @@ if  extraLinearVariablesNumber==0 || isempty(extraLinearVariables)
     extraCoeff=extraCoeffDefaultValue;
 end
 
-if ~offsetIsInRawSpace
+if ~isRawOffset
     recalibratedData=calibrationMatrix*rawData'+offset+extraCoeff*extraLinearVariables';
 else
     recalibratedData=calibrationMatrix*(rawData'+offset)+extraCoeff*extraLinearVariables';
 end
 recalibratedData=recalibratedData';
 
-if offsetIsInRawSpace
+if isRawOffset
     offsetInForce=calibrationMatrix*offset;
 else
     offsetInForce=[];
