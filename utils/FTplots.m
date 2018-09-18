@@ -85,14 +85,37 @@ end
 
 
 
-xPlotOptions = 'r.';
-yPlotOptions = 'g.';
-zPlotOptions = 'b.';
-x2PlotOptions = 'c.';% 'm.';
-y2PlotOptions = {'Color',[0.5412 0.1686 0.8863],'Marker','.','LineStyle','none'};
+% xPlotOptions = 'r.';
+% yPlotOptions = 'g.';
+% zPlotOptions = 'b.';
+% x2PlotOptions = 'c.';% 'm.';
+% y2PlotOptions = {'Color',[0.5412 0.1686 0.8863],'Marker','.','LineStyle','none'};
+% %z2PlotOptions = 'y.';% 'c.';
+% z2PlotOptions = {'Color',[1.0000 0.5490 0],'Marker','.','LineStyle','none'};
+% % z2PlotOptions{:}
+colors=[ 0    0.4470    0.7410;
+    0.8500    0.3250    0.0980;
+    0.9290    0.6940    0.1250;
+    0.4940    0.1840    0.5560;
+    0.4660    0.6740    0.1880;
+    0.3010    0.7450    0.9330;];
+
+xPlotOptions = {'Color',colors(1,:),'Marker','.','LineStyle','none'};
+yPlotOptions ={'Color',colors(2,:),'Marker','.','LineStyle','none'};
+zPlotOptions = {'Color',colors(3,:),'Marker','.','LineStyle','none'};
+x2PlotOptions = {'Color',colors(4,:),'Marker','.','LineStyle','none'};
+y2PlotOptions = {'Color',colors(5,:),'Marker','.','LineStyle','none'};
 %z2PlotOptions = 'y.';% 'c.';
-z2PlotOptions = {'Color',[1.0000 0.5490 0],'Marker','.','LineStyle','none'};
+z2PlotOptions = {'Color',colors(6,:),'Marker','.','LineStyle','none'};
 % z2PlotOptions{:}
+
+% use colors from colormap(lines)
+colors=[ 0    0.4470    0.7410;
+    0.8500    0.3250    0.0980;
+    0.9290    0.6940    0.1250;
+    0.4940    0.1840    0.5560;
+    0.4660    0.6740    0.1880;
+    0.3010    0.7450    0.9330;];
 
 locationLegend='northeast';
 fields=fieldnames(data);
@@ -140,9 +163,9 @@ end
 if (~byChannel && isempty(reference))
     for i=1:size(fields,1)
          figure('WindowStyle','docked'),
-        plot(xAxis,data.(fields{i})(:,1),xPlotOptions);hold on;
-        plot(xAxis,data.(fields{i})(:,2),yPlotOptions);hold on;
-        plot(xAxis,data.(fields{i})(:,3),zPlotOptions);hold on;
+        plot(xAxis,data.(fields{i})(:,1),xPlotOptions{:});hold on;
+        plot(xAxis,data.(fields{i})(:,2),yPlotOptions{:});hold on;
+        plot(xAxis,data.(fields{i})(:,3),zPlotOptions{:});hold on;
         if raw
              legend('ch1','ch2','ch3','Location',locationLegend);
         else
@@ -151,13 +174,14 @@ if (~byChannel && isempty(reference))
         title(escapeUnderscores((fields{i})));
         xlabel(xAxisOption);
         ylabel('N');
+        legendmarkeradjust(20);
     end
     if(~onlyForce)
         for  i=1:size(fields,1)
              figure('WindowStyle','docked'),
-            plot(xAxis,data.(fields{i})(:,4),xPlotOptions);hold on;
-            plot(xAxis,data.(fields{i})(:,5),yPlotOptions);hold on;
-            plot(xAxis,data.(fields{i})(:,6),zPlotOptions);hold on;
+            plot(xAxis,data.(fields{i})(:,4),x2PlotOptions{:});hold on;
+            plot(xAxis,data.(fields{i})(:,5),y2PlotOptions{:});hold on;
+            plot(xAxis,data.(fields{i})(:,6),z2PlotOptions{:});hold on;
             if raw               
                 legend('ch4','ch5','ch6','Location',locationLegend);
             else
@@ -166,7 +190,7 @@ if (~byChannel && isempty(reference))
             title(escapeUnderscores((fields{i})));
             xlabel(xAxisOption);
             ylabel('Nm');
-            
+            legendmarkeradjust(20);
         end
     end
 end
@@ -174,10 +198,10 @@ end
 if (~isempty(reference) && ~byChannel)
     for i=1:size(fields,1)
          figure('WindowStyle','docked'),
-        plot(xAxis,data.(fields{i})(:,1),xPlotOptions);hold on;
-        plot(xAxis,data.(fields{i})(:,2),yPlotOptions);hold on;
-        plot(xAxis,data.(fields{i})(:,3),zPlotOptions);hold on;
-        plot(xAxisReference,reference.(rfields{i})(:,1),x2PlotOptions);hold on;
+        plot(xAxis,data.(fields{i})(:,1),xPlotOptions{:});hold on;
+        plot(xAxis,data.(fields{i})(:,2),yPlotOptions{:});hold on;
+        plot(xAxis,data.(fields{i})(:,3),zPlotOptions{:});hold on;
+        plot(xAxisReference,reference.(rfields{i})(:,1),x2PlotOptions{:});hold on;
         plot(xAxisReference,reference.(rfields{i})(:,2),y2PlotOptions{:});hold on;
         plot(xAxisReference,reference.(rfields{i})(:,3),z2PlotOptions{:});hold on;
         if raw
@@ -188,16 +212,17 @@ if (~isempty(reference) && ~byChannel)
         title(escapeUnderscores( strcat((fields{i}),{' and  '},referenceName,{' '},(rfields{i}))));
         xlabel(xAxisOption);
         ylabel('N');
+        legendmarkeradjust(20);
     end
     if(~onlyForce)
         for  i=1:size(fields,1)
              figure('WindowStyle','docked'),
-            plot(xAxis,data.(fields{i})(:,4),xPlotOptions);hold on;
-            plot(xAxis,data.(fields{i})(:,5),yPlotOptions);hold on;
-            plot(xAxis,data.(fields{i})(:,6),zPlotOptions);hold on;
-            plot(xAxisReference,reference.(rfields{i})(:,4),x2PlotOptions);hold on;
-            plot(xAxisReference,reference.(rfields{i})(:,5),y2PlotOptions{:});hold on;
-            plot(xAxisReference,reference.(rfields{i})(:,6), z2PlotOptions{:});hold on;
+            plot(xAxis,data.(fields{i})(:,4),x2PlotOptions{:});hold on;
+            plot(xAxis,data.(fields{i})(:,5),y2PlotOptions{:});hold on;
+            plot(xAxis,data.(fields{i})(:,6),z2PlotOptions{:});hold on;
+            plot(xAxisReference,reference.(rfields{i})(:,4),xPlotOptions{:});hold on;
+            plot(xAxisReference,reference.(rfields{i})(:,5),yPlotOptions{:});hold on;
+            plot(xAxisReference,reference.(rfields{i})(:,6), zPlotOptions{:});hold on;
             if raw                
                 legend('ch4','ch5','ch6','ch4_2','ch5_2','ch6_2','Location',locationLegend);
             else
@@ -206,16 +231,16 @@ if (~isempty(reference) && ~byChannel)
             title(escapeUnderscores( strcat((fields{i}),{' and  '},referenceName,{' '},(rfields{i}))));
             xlabel(xAxisOption);
             ylabel('Nm');
-            
+            legendmarkeradjust(20);
         end
     end
     if (length(time)== length(referenceTime) && showDifference)
     if (sum(referenceTime==time)==length(time))
         for  i=1:size(fields,1)
             figure('WindowStyle','docked'),
-            plot(xAxis,abs(data.(fields{i})(:,1))-abs(reference.(rfields{i})(:,1)),xPlotOptions);hold on;
-            plot(xAxis,abs(data.(fields{i})(:,2))-abs(reference.(rfields{i})(:,2)),yPlotOptions);hold on;
-            plot(xAxis,abs(data.(fields{i})(:,3))-abs(reference.(rfields{i})(:,3)),zPlotOptions);hold on;
+            plot(xAxis,abs(data.(fields{i})(:,1))-abs(reference.(rfields{i})(:,1)),xPlotOptions{:});hold on;
+            plot(xAxis,abs(data.(fields{i})(:,2))-abs(reference.(rfields{i})(:,2)),yPlotOptions{:});hold on;
+            plot(xAxis,abs(data.(fields{i})(:,3))-abs(reference.(rfields{i})(:,3)),zPlotOptions{:});hold on;
             if raw
                 
                 legend('ch1','ch2','ch3','Location',locationLegend);
@@ -225,13 +250,14 @@ if (~isempty(reference) && ~byChannel)
             title(escapeUnderscores( strcat((fields{i}),{' -  '},referenceName,{' '},(rfields{i}))));
             xlabel(xAxisOption);
             ylabel('N');
+            legendmarkeradjust(20);
         end
         if(~onlyForce)
             for  i=1:size(fields,1)
                 figure('WindowStyle','docked'),
-                plot(xAxis,abs(data.(fields{i})(:,4))-abs(reference.(rfields{i})(:,4)),xPlotOptions);hold on;
-                plot(xAxis,abs(data.(fields{i})(:,5))-abs(reference.(rfields{i})(:,5)),yPlotOptions);hold on;
-                plot(xAxis,abs(data.(fields{i})(:,6))-abs(reference.(rfields{i})(:,6)),zPlotOptions);hold on;
+                plot(xAxis,abs(data.(fields{i})(:,4))-abs(reference.(rfields{i})(:,4)),x2PlotOptions{:});hold on;
+                plot(xAxis,abs(data.(fields{i})(:,5))-abs(reference.(rfields{i})(:,5)),y2PlotOptions{:});hold on;
+                plot(xAxis,abs(data.(fields{i})(:,6))-abs(reference.(rfields{i})(:,6)),z2PlotOptions{:});hold on;
                 if raw
                     legend('ch4','ch5','ch6','Location',locationLegend);
                 else
@@ -240,6 +266,7 @@ if (~isempty(reference) && ~byChannel)
                 title(escapeUnderscores( strcat((fields{i}),{' -  '},referenceName,{' '},(rfields{i}))));
                 xlabel(xAxisOption);
                 ylabel('Nm');
+                legendmarkeradjust(20);
             end
         end
     end
@@ -260,9 +287,9 @@ if (byChannel)
     for i=1:size(fields,1)
         for n=1:count
              figure('WindowStyle','docked'),
-            plot(xAxis,data.(fields{i})(:,n),xPlotOptions);
+            plot(xAxis,data.(fields{i})(:,n),xPlotOptions{:});
             if ~isempty(reference)
-                hold on; plot(xAxisReference,reference.(rfields{i})(:,n),zPlotOptions);
+                hold on; plot(xAxisReference,reference.(rfields{i})(:,n),yPlotOptions{:});
                 legend((legendNames{n}),strcat((legendNames{n}),'_2'));
                 title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),{' and  '},escapeUnderscores(strcat(referenceName,{' '},(rfields{i})))));
             else
@@ -284,7 +311,7 @@ if (byChannel)
                 for i=1:size(fields,1)
                     for n=1:count
                         figure('WindowStyle','docked'),
-                        plot(xAxis,abs(data.(fields{i})(:,n))-abs(reference.(rfields{i})(:,n)),xPlotOptions);hold on;
+                        plot(xAxis,abs(data.(fields{i})(:,n))-abs(reference.(rfields{i})(:,n)),xPlotOptions{:});hold on;
                         legend(strcat((legendNames{n}),' error'));
                         title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),{' - '},escapeUnderscores(strcat(referenceName,{' '},(rfields{i})))));                        
                         xlabel(xAxisOption);
