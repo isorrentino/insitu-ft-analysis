@@ -7,6 +7,7 @@ dataFields=fieldnames(datasetToUse);
 otherCoeff=[];
 otherCoeffVarName={};
 isRawOffset=true;
+plotMeasureVsEstimate=false;
 if (~any(strcmp('rawData', dataFields)))
     error(' %s field required','rawData');
 end
@@ -76,6 +77,12 @@ for v=1:2:length(varargin)
                 else
                     warning('checkNewMatrixPerformance: expected a boolean variable for option OffsetIsRaw, ignoring');
                 end
+            case {'plotMeasureVsEstimate','plotMvsE','MeasureVSestimate','plotmvse'}
+                if islogical(tempV)
+                    plotMeasureVsEstimate=tempV;
+                else
+                    warning('checkNewMatrixPerformance: expected a boolean variable for option plot Measure VS Estimate, ignoring');
+                end
         end
     end
 end
@@ -115,8 +122,10 @@ for ftIdx =1:length(sensorsToAnalize)
     % plot forces with time as x axis
     if(checkMatrixOptions.plotForceVsTime)
         FTplots(struct(ft,reCalibData.(ft),strcat('estimate',ft),datasetToUse.estimatedFtData.(ft)),datasetToUse.time,'forcecomparison');
-        %FTplots(struct(strcat('measure',ft),filteredNoOffset.(ft),strcat('estimate',ft),modifiedDataset.estimatedFtData.(ft)),modifiedDataset.time,'forcecomparison');
-        %FTplots(struct(ft,reCalibData.(ft),strcat('measure',ft),filteredNoOffset.(ft)),modifiedDataset.time,'forcecomparison');
+       if plotMeasureVsEstimate && ~(round(datasetToUse.cMat.(ft))==eye(6))
+           FTplots(struct(strcat('measure',ft),filteredNoOffset.(ft),strcat('estimate',ft),datasetToUse.estimatedFtData.(ft)),datasetToUse.time,'forcecomparison');
+       end
+        %FTplots(struct(ft,reCalibData.(ft),strcat('measure',ft),filteredNoOffset.(ft)),datasetToUse.time,'forcecomparison');
     end
     
     %%  secondary matrix format
