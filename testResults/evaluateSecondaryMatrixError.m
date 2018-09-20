@@ -23,8 +23,9 @@ else
     estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans);
     names=extForceResults.names.experimentNames;
     sensorsToAnalize={'right_leg'};%fieldnames(extForceResults.results); % this bring all sensors that were estimated not neccesarily the ones to analize
-    framesToAnalize={'r_upper_leg'};%fieldnames(extForceResults.results.(sensorsToAnalize{1}).(names2use{1}).externalForcesAtSensorFrame);
     sensorName={'r_leg_ft_sensor'};
+    framesToAnalize={'r_upper_leg'};%fieldnames(extForceResults.results.(sensorsToAnalize{1}).(names2use{1}).externalForcesAtSensorFrame);
+    
     % create selector matrix
     orderArrangement=[1 3 2];
     namesMatrix=reshape(names2use(2:end),length(estimationNames),length(lambdasNames),length(names)-1);
@@ -33,7 +34,7 @@ else
     selectEstTypes=1:2:length(estimationNames);
     selectDataset=(2:length(names))-1;
     selectLambdas=1:length(lambdasNames);
-    timeLength=length(stackedResults.(sensorsToAnalize{1}).(names2evaluate{1}).eForcesTime);
+    timeLength=length(stackedResults.(sensorsToAnalize{1}).Workbench.eForcesTime);
     selectTimeSamples=[1:20:3000,3001:timeLength];
     % create names based on selected values
     names2check=namesMatrix(selectEstTypes,selectDataset,selectLambdas);
@@ -122,14 +123,14 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
                 end
                 extForceToPlot=[extForceToPlot;wkbenchErr];
                 xBarNames{length(xBarNames)+1}='Workbench';
-                
+                figure,
                 b=bar3(extForceToPlot);
                 set(gca,'YTickLabel',escapeUnderscores(   xBarNames));
                 set(gca,'XTickLabel',lambdas');
                 ylabel('Dataset+estimationType')
                 xlabel('\lambda')
                 zlabel('External Force (N)')
-                title('Second Validation Procedure Results')
+                title(strcat('Second Validation Procedure Results ',(sensorsToAnalize{j})))
                 colorbar
                 for k = 1:length(b)
                     zdata = b(k).ZData;
