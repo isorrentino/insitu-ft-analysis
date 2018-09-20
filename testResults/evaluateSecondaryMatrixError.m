@@ -2,15 +2,19 @@
 % convert from extForceResults structure to what is used here
 stackedResults=extForceResults.results;
 names2use=extForceResults.names.names2use;
-% cMat=extForceResults.cMat;
+ cMat=extForceResults.cMat;
 WorkbenchMat=cMat.Workbench;
+lambdas=extForceResults.lambdas;
+lambdasNames=generateLambdaNames(extForceResults.lambdas);
+estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans);
+names=extForceResults.names.experimentNames;
 % sensorsToAnalize=fieldnames(extForceResults.results); % this bring all sensors that were estimated not neccesarily the ones to analize
 % framesToAnalize=fieldnames(extForceResults.results.(sensorsToAnalize{1}).(names2use{1}).externalForcesAtSensorFrame);
 orderArrangement=[1 3 2];
-namesMatrix=reshape(names2use(2:end),length(estimationNames),length(lambdasNames),length(names)-1)
+namesMatrix=reshape(names2use(2:end),length(estimationNames),length(lambdasNames),length(names)-1);
 namesMatrix=permute(namesMatrix,orderArrangement); % this makes so that the lambdas are in the last dimension.
 
-selectEstTypes=1:length(estimationNames);
+selectEstTypes=1:2:length(estimationNames);
 selectDataset=(2:length(names))-1;
 selectLambdas=1:length(lambdasNames);
 names2check=namesMatrix(selectEstTypes,selectDataset,selectLambdas);
@@ -129,10 +133,11 @@ for j=1:length(sensorName)
 end
 
 if plotResults
-    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best General');
-    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis');
+    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best General','byChannel');
+    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis','byChannel');
 % 3D plot
 
 
 end
-
+%% clear variables
+% clear error errorXaxis strd strd_axis
