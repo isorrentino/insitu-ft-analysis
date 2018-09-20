@@ -1,25 +1,47 @@
 %% Evaluate error
+loadResult=true;
 % convert from extForceResults structure to what is used here
-stackedResults=extForceResults.results;
-names2use=extForceResults.names.names2use;
- cMat=extForceResults.cMat;
-WorkbenchMat=cMat.Workbench;
-lambdas=extForceResults.lambdas;
-lambdasNames=generateLambdaNames(extForceResults.lambdas);
-estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans);
-names=extForceResults.names.experimentNames;
-% sensorsToAnalize=fieldnames(extForceResults.results); % this bring all sensors that were estimated not neccesarily the ones to analize
-% framesToAnalize=fieldnames(extForceResults.results.(sensorsToAnalize{1}).(names2use{1}).externalForcesAtSensorFrame);
-orderArrangement=[1 3 2];
-namesMatrix=reshape(names2use(2:end),length(estimationNames),length(lambdasNames),length(names)-1);
-namesMatrix=permute(namesMatrix,orderArrangement); % this makes so that the lambdas are in the last dimension.
-
-selectEstTypes=1:2:length(estimationNames);
+if exist('stackedResults','var') && ~loadResult
+    names2evaluate=names2use;
+    selectEstTypes=1:length(estimationNames);
 selectDataset=(2:length(names))-1;
 selectLambdas=1:length(lambdasNames);
-names2check=namesMatrix(selectEstTypes,selectDataset,selectLambdas);
-names2evaluate=names2check(:); %typically
-names2evaluate=[names2use(1);names2evaluate];
+timeLength=length(stackedResults.(sensorsToAnalize{1}).(names2evaluate{1}).eForcesTime);
+    selectTimeSamples=1:timeLength;
+else
+    if ~exist ('extForceResults','var') % select result file
+        [file,path] = uigetfile;
+        load(strcat(path,file));
+    end
+    % convert info form extforce resutls to variables used
+    stackedResults=extForceResults.results;
+    names2use=extForceResults.names.names2use;
+    cMat=extForceResults.cMat;
+    WorkbenchMat=cMat.Workbench;
+    lambdas=extForceResults.lambdas;
+    lambdasNames=generateLambdaNames(extForceResults.lambdas);
+    estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans);
+    names=extForceResults.names.experimentNames;
+    sensorsToAnalize={'right_leg'};%fieldnames(extForceResults.results); % this bring all sensors that were estimated not neccesarily the ones to analize
+    framesToAnalize={'r_upper_leg'};%fieldnames(extForceResults.results.(sensorsToAnalize{1}).(names2use{1}).externalForcesAtSensorFrame);
+    sensorName={'r_leg_ft_sensor'};
+    % create selector matrix
+    orderArrangement=[1 3 2];
+    namesMatrix=reshape(names2use(2:end),length(estimationNames),length(lambdasNames),length(names)-1);
+    namesMatrix=permute(namesMatrix,orderArrangement); % this makes so that the lambdas are in the last dimension.
+    % select conditions of the evaluation
+    selectEstTypes=1:2:length(estimationNames);
+    selectDataset=(2:length(names))-1;
+    selectLambdas=1:length(lambdasNames);
+    timeLength=length(stackedResults.(sensorsToAnalize{1}).(names2evaluate{1}).eForcesTime);
+    selectTimeSamples=[1:20:3000,3001:timeLength];
+    % create names based on selected values
+    names2check=namesMatrix(selectEstTypes,selectDataset,selectLambdas);
+    names2evaluate=names2check(:); %typically
+    names2evaluate=[names2use(1);names2evaluate];
+    %% clear variables
+    clear error errorXaxis strd strd_axis
+end
 useMean=true; %select which means of evaluation should be considered is either mean or standard deviation.
 plotResults=true;
 for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 sensors in the same leg
@@ -27,10 +49,10 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
         
         
         for i=1:length(names2evaluate)
-            error.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=norm(mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(:,1:3))));
-            errorXaxis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})));
-            strd.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=std(mean(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(:,1:3)));
-            strd_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=std(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j}));
+            error.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=norm(mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3))));
+            errorXaxis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:)));
+            strd.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=std(mean(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3)));
+            strd_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=std(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:));
             % we probably want the mean of the standard deviations of the
             % forces during experiment. the lower the variability the
             % better
@@ -87,8 +109,8 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
             xmlStrFrankie.(sensorName{j})=cMat2xml(fCalibMat.(sensorsToAnalize{j}),sensorName{j});% print in required format to use by WholeBodyDynamics
             
             if plotResults
-                comparisonData.(framesToAnalize{frN})=stackedResults.(sensorsToAnalize{j}).Workbench.externalForces.(framesToAnalize{frN});
-                newData.(framesToAnalize{frN})=stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).externalForces.(framesToAnalize{frN});
+                comparisonData.(framesToAnalize{frN})=stackedResults.(sensorsToAnalize{j}).Workbench.externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j});
+                newData.(framesToAnalize{frN})=stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j});
                 % bar3 plot
                 xBarNames=generateCalibrationFileNames(names(selectDataset+1),estimationNames(selectEstTypes));
                 if useMean
@@ -135,9 +157,9 @@ end
 if plotResults
     FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best General','byChannel');
     FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis','byChannel');
-% 3D plot
-
-
+    % 3D plot
+    
+    
 end
 %% clear variables
 % clear error errorXaxis strd strd_axis
