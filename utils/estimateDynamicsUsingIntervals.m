@@ -1,5 +1,5 @@
 function [dataset,endMask,contactFrame]=estimateDynamicsUsingIntervals(dataset,estimator,input,useInertial)
-
+calculateAcc=true;
 endMask=~logical(dataset.time);
 contactFrame=cell(length(dataset.time),1);
 %% Manage intervals
@@ -9,7 +9,7 @@ if (any(strcmp('intervals', fieldnames(input))))
         if (any(strcmp('hanging', intervalsNames)) && isfield(dataset,'inertialData'))
             mask=dataset.time>=dataset.time(1)+input.intervals.hanging.initTime & dataset.time<=dataset.time(1)+input.intervals.hanging.endTime;
             fprintf('estimateDynamicsUsingIntervals: estimating interval hanging with contact frame %s from %d s to %d s \n',input.intervals.hanging.contactFrame,input.intervals.hanging.initTime,input.intervals.hanging.endTime);
-            [inertialEstimatedFtData]=obtainEstimatedWrenches(estimator,dataset.time,{input.intervals.hanging.contactFrame},dataset,mask,dataset.inertialData);
+            [inertialEstimatedFtData]=obtainEstimatedWrenches(estimator,dataset.time,{input.intervals.hanging.contactFrame},dataset,'mask',mask,'inertialdata',dataset.inertialData,'calculatedq',false,'calculateddq',calculateAcc);
             
             inertial.ftData=inertialEstimatedFtData.ftData;
             inertial.time=inertialEstimatedFtData.time;
@@ -79,10 +79,10 @@ if (any(strcmp('intervals', fieldnames(input))))
                 
                 if (useInertial && isfield(dataset,'inertialData'))
                     disp('estimateDynamicsUsingIntervals: using floating base for estimation');
-                    [dataset2]=obtainEstimatedWrenches(estimator,dataset.time,{input.intervals.(intName).contactFrame},dataset,mask,dataset.inertialData);
+                    [dataset2]=obtainEstimatedWrenches(estimator,dataset.time,{input.intervals.(intName).contactFrame},dataset,'mask',mask,'inertialdata',dataset.inertialData,'calculatedq',false,'calculateddq',calculateAcc);
                 else
                     disp('estimateDynamicsUsingIntervals: using fixed base for estimation');
-                    [dataset2]=obtainEstimatedWrenches(estimator,dataset.time,{input.intervals.(intName).contactFrame},dataset,mask);
+                    [dataset2]=obtainEstimatedWrenches(estimator,dataset.time,{input.intervals.(intName).contactFrame},dataset,'mask',mask,'calculatedq',false,'calculateddq',calculateAcc);
                 end
                 sensorNames=fieldnames(dataset2.estimatedFtData);
                 

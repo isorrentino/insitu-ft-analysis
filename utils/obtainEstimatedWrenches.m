@@ -14,62 +14,89 @@ function [dataset]=obtainEstimatedWrenches(estimator,resampledTime,contactFrameN
 %
 %% Check varargin
 useInertial=false;
+calculatedq=false;
+calculateddq=false;
+timeDelta=resampledTime(2)-resampledTime(1);
 if(~isempty(varargin))
-    if (length(varargin)<3)
-        if (length(varargin)==1) % it means mask available
-            if (islogical(varargin{1}))
-                mask=varargin{1};
-                if(size(mask)==size(resampledTime))
-                    dataset=applyMask(dataset,mask);
-                    resampledTime=applyMask(resampledTime,mask);
-                else
-                    disp('Mask is the wrong size');
+    if mod(length(varargin),2)==0
+        for v=1:2:length(varargin)
+            content=varargin{v+1};
+            if(ischar(  varargin{v}))
+                switch lower(varargin{v})
+                    case {'mask'}
+                        if islogical(content)
+                            if(size(content)==size(dataset.time))
+                                mask=content;                                
+                            else
+                                warning('obtainEstimatedWrenches:Mask is the wrong size, parameter ignored');
+                            end
+                        end
+                    case {'inertial','inertialdata','inertial data'}
+                        if isstruct(content) % it means inertial data is provided
+                            inertialData=content;
+                            inertialFields=fieldnames(inertialData);
+                            if length(inertialFields)==2
+                                useInertial=true;
+                            else
+                                warning('obtainEstimatedWrenches: Expected inertial data that has only 2 fields');
+                            end
+                        end
+                    case{'diffpos','differentiateposition','calculatedq',}
+                        if islogical(content)
+                            calculatedq=content;
+                        else
+                            warning('obtainEstimatedWrenches: expected boolean for calculate dq, parameter ignored');
+                        end
+                    case{'diffvel','differentiatevelocity','calculateddq',}
+                        if islogical(content)
+                            calculateddq=content;
+                        else
+                            warning('obtainEstimatedWrenches: expected boolean for calculate ddq, parameter ignored');
+                        end
                 end
             else
-                if(isstruct(varargin{1}))
-                    inertialData=varargin{1};
-                    inertialFields=fieldnames(inertialData);
-                    if(length(inertialFields)==2)
-                        useInertial=true;
-                        disp('obtainedEstimatedWrenches: Using inertial data');
-                    else
-                        disp('obtainedEstimatedWrenches: Error! Expected inertial data that has only 2 fields');
-                    end
-                else
-                    disp('obtainedEstimatedWrenches: Not valid argument');
-                end
+                warning('obtainEstimatedWrenches: Unexpected option.')
             end
         end
-        if (length(varargin)==2) % it means inertial data is provided
-            if (islogical(varargin{1}))
-                mask=varargin{1};
-                if(size(mask)==size(resampledTime))
-                    dataset=applyMask(dataset,mask);
-                    resampledTime=applyMask(resampledTime,mask);
-                else
-                    disp('obtainedEstimatedWrenches: Mask is the wrong size');
-                end
-            end
-            if(isstruct(varargin{2}))
-                inertialData=varargin{2};
-                inertialFields=fieldnames(inertialData);
-                if(length(inertialFields)==2)
-                    useInertial=true;
-                    disp('obtainedEstimatedWrenches: Using inertial data');
-                else
-                    disp('obtainedEstimatedWrenches: Error! Expected inertial data that has only 2 fields');
-                end
-            end
-        end
-        
     else
-        disp('obtainedEstimatedWrenches: Too many arguments, check what you are sending (extra parameters ignored)')
+        error( 'obtainEstimatedWrenches: varargin should contain and even number of parameters, something is wrong');
     end
 end
+
 %% Take the used position from the dataset
 qj_all=dataset.qj;
-dqj_all=dataset.dqj;
-ddqj_all=dataset.ddqj;
+% if calculateddq
+%     diffddq=diff(dataset.dqj)/timeDelta;
+%     ddqj_all=[zeros(size(qj_all(1,:)));diffddq];
+%     dataset.ddqj=ddqj_all;
+% else
+%     %for now acc values are unreliable so zeroes
+%     %ddqj_all=dataset.ddqj;
+%     ddqj_all=zeros(size(dataset.ddqj));
+% end
+if calculatedq
+    dqj_all=numericalDifferentiation(dataset.qj,timeDelta);
+    dataset.dqj=dqj_all;
+else
+    dqj_all=dataset.dqj;
+end
+if calculateddq
+    ddqj_all=numericalDifferentiation(dqj_all,timeDelta);
+    dataset.ddqj=ddqj_all;
+else
+    %for now acc values are unreliable so zeroes
+    %ddqj_all=dataset.ddqj;
+    ddqj_all=zeros(size(dataset.ddqj));
+end
+
+
+if exist('mask','var')
+    dataset=applyMask(dataset,mask);
+    resampledTime=applyMask(resampledTime,mask);
+    qj_all=applyMask(qj_all,mask);
+    dqj_all=applyMask(dqj_all,mask);
+    ddqj_all=applyMask(ddqj_all,mask);
+end
 
 dofs = estimator.model().getNrOfDOFs();
 
@@ -147,12 +174,12 @@ for t=1:length(resampledTime)
     
     qj=qj_all(t,:);
     dqj=dqj_all(t,:);
-    %ddqj=ddqj_all(t,:);
+    ddqj=ddqj_all(t,:);
     
     %    % velocity and acceleration to 0 to prove if they are neglegible. (slow
     %    % experiment scenario)
     %     dqj=zeros(size(qj));
-    ddqj=zeros(size(qj)); % temprorary change due to problem with the acc in the firmware
+    % ddqj=zeros(size(qj)); % temprorary change due to problem with the acc in the firmware
     
     qj_idyn.fromMatlab(qj);
     dqj_idyn.fromMatlab(dqj);
