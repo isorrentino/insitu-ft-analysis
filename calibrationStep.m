@@ -68,7 +68,9 @@ if(calibOptions.saveMat)
         firmwareMat=calibMatrices.(ft);
         full_scale=fullscale.(ft);
         if ~isempty(temperatureCoeff)
-            writeCalibMat(firmwareMat, full_scale, filename,temperatureCoeff.(ft))
+            offsetInForce=firmwareMat*offset.(ft)';
+            allOffsets=[offsetInForce;dataset.temperature.(ft)(1)];
+            writeCalibMat(firmwareMat, full_scale, filename,'extraCoeffs',temperatureCoeff.(ft),'offsets',allOffsets)
         else
             writeCalibMat(firmwareMat, full_scale, filename)
         end

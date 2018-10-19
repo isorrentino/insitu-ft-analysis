@@ -31,9 +31,9 @@ Ws = diag([1/maxRaw 1/maxRaw 1/maxRaw 1/maxRaw 1/maxRaw 1/maxRaw]);
 Cs = Wf * calibMat * inv(Ws);
 
 if(sum(sum(Cs>1))==0 && sum(sum(Cs<-1))==0)
-    disp('Matrix can be implemented in the DSP (i.e. coeffs in [-1 1])')
+    disp('writeCalibMat: Matrix can be implemented in the DSP (i.e. coeffs in [-1 1])')
 else
-    disp('ERROR!!!! Matrix cannot be implemented in the DSP (i.e. coeffs not in [-1 1])')
+    disp('writeCalibMat: ERROR!!!! Matrix cannot be implemented in the DSP (i.e. coeffs not in [-1 1])')
 end
 
 fid = fopen(filename, 'w+');
@@ -52,32 +52,55 @@ fprintf(fid, '%d\r\n', ceil(full_scale(5)));
 fprintf(fid, '%d\r\n', ceil(full_scale(6)));
 
 if fclose(fid) == -1
-    error('[ERROR] there was a problem in closing the file')
+    error('writeCalibMat: [ERROR] there was a problem in closing the file')
 end
 
 if ~isempty(varargin)
-    fid = fopen(strcat(filename,'_extraCoeff'), 'w+');
-    for v=1:length(varargin)
-        if isvector(varargin{v}) && isnumeric(varargin{v})
-            if mod(length(varargin{v}),6)==0
-                for i=1:length(varargin{v})
-                    fprintf(fid, '%f\r\n', varargin{v}(i));
-                end
-            end
-        else
-            if ismatrix(varargin{v}) && isnumeric(varargin{v})
-                if size( varargin{v},1)==6
-                    for iy=1:6
-                        for ix=1:size( varargin{v},2)
-                            temp=varargin{v}(iy,ix);
-                            fprintf(fid, '%f\r\n', temp);
+    for v=1:2:length(varargin)
+        if(ischar(  varargin{v}))
+            switch varargin{v}
+                case {'extraCoeff','extracoeff','extraCoeffs','extracoeffs'}
+                    fid = fopen(strcat(filename,'_extraCoeff'), 'w+');
+                    vinput=varargin{v+1};
+                    if isvector(vinput) && isnumeric(vinput)
+                        if mod(length(vinput),6)==0
+                            for i=1:length(vinput)
+                                fprintf(fid, '%f\r\n', vinput(i));
+                            end
                         end
+                    else
+                        if ismatrix(vinput) && isnumeric(vinput)
+                            if size( vinput,1)==6
+                                for iy=1:6
+                                    for ix=1:size( vinput,2)
+                                        temp=vinput(iy,ix);
+                                        fprintf(fid, '%f\r\n', temp);
+                                    end
+                                end
+                            end
+                        end
+                    end                    
+                    if fclose(fid) == -1
+                        error('writeCalibMat: [ERROR] there was a problem in closing the file')
                     end
-                end
+                case {'offsets'}
+                    fid = fopen(strcat(filename,'_offsets'), 'w+');
+                    vinput=varargin{v+1};
+                    if isvector(vinput) && isnumeric(vinput)
+                        if length(vinput)>=6
+                            for i=1:length(vinput)
+                                fprintf(fid, '%f\r\n', vinput(i));
+                            end     
+                        else
+                            error('writeCalibMat: [ERROR] offsets should be at least 6')
+                        end
+                    else
+                     error('writeCalibMat: [ERROR] offsets should be a vector')
+                    end                    
+                    if fclose(fid) == -1
+                        error('writeCalibMat: [ERROR] there was a problem in closing the file')
+                    end
             end
         end
-    end
-    if fclose(fid) == -1
-        error('[ERROR] there was a problem in closing the file')
     end
 end
