@@ -1,4 +1,4 @@
-function [cMat,full_scale] = readCalibMat(filename)
+function [cMat,full_scale,offsets] = readCalibMat(filename)
 %read the calibration matrix delivered by the calibration procedure
 defaultFullScale=false;
 
@@ -6,7 +6,7 @@ defaultFullScale=false;
 fid = fopen(filename);
 
 if( fid == -1 )
-    error(strcat('[ERROR] error in opening file ',filename))
+    error(strcat('readCalibMat: [ERROR] error in opening file ',filename))
 end
 
 format = '%X';
@@ -17,7 +17,7 @@ mask=calibMat>1;
 calibMat(mask)=calibMat(mask)-2;
 
 if fclose(fid) == -1
-   error('[ERROR] there was a problem in closing the file')
+   error('readCalibMat: [ERROR] there was a problem in closing the file')
 end
 %these values were originally base 10, due to format they were converted
 %as if they were hex so dec2hex returns them to real base 10 value in this
@@ -44,4 +44,15 @@ if (exist(strcat(filename,'_extraCoeff'),'file')==2)
     columns=length(vec2)/6;
     extraCoeff=reshape(vec2,[6,columns]);
     cMat=[cMat  extraCoeff];
+end
+
+if (exist(strcat(filename,'_offsets'),'file')==2)   
+    vec2=load(strcat(filename,'_offsets'));
+    if length(vec2)== size(cMat,2)
+        offsets=vec2;
+    else
+        error('readCalibMat: [ERROR] offset file should contain the same amount of values as the full calibration matrix');
+    end   
+else
+    offsets=[];
 end
