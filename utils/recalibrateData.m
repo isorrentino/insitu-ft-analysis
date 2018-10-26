@@ -17,9 +17,10 @@ recalibratedData=zeros(numberOfSamples,outputSize);
 extraLinearVariablesNumber=0;
 extraCoeff=[];
 extraLinearVariables=[];
+extraOffset=[];
 extraCoeffDefaultValue=zeros(outputSize,1);
 offset=zeros(outputSize,1);
-skip=false;
+skip=0;
 isRawOffset=true;
 %% varargin logic
 for v=1:2:length(varargin)
@@ -61,9 +62,23 @@ for v=1:2:length(varargin)
                                     if isvector(vtoCheckValue)
                                         if (sum(size(vtoCheckValue)) ==(outputSize+1) && (size(vtoCheckValue,1)==outputSize || size(vtoCheckValue,2)==outputSize) )
                                             tempPrevLinVar=vtoCheckValue;
-                                            skip=true;
-                                        else
-                                            skip=false;
+                                            skip=skip+1;
+                                            % check if there is some offset
+                                            % for this variable
+                                            varOff=0;
+                                            if v+5<=length(varargin) % needs 3 more options in varargin to check this
+                                                vtoCheck2=varargin{v+4};
+                                                vtoCheckValue2=varargin{v+5};
+                                                if sum(strcmp(vtoCheck2,{'extVarOffset','ExtVarOffset','LinVarOff','varOff'}))>0
+                                                    if length(vtoCheckValue2)==1
+                                                        varOff=vtoCheckValue2;
+                                                        skip=skip+1;
+                                                    else
+                                                        warning('recalibrateData: expected one value for the offset');
+                                                    end
+                                                end
+                                            end
+                                    else                                            
                                             warning('recalibrateData: this vector is not of the right dimensions, ignoring vector');
                                         end
                                     else
@@ -74,6 +89,7 @@ for v=1:2:length(varargin)
                                 warning('recalibrateData: No coefficient available so coeff will be set to 0, the variable will have no effec in recalibrating the data.')
                             end
                             extraCoeff=[extraCoeff tempPrevLinVar];
+                            extraOffset=[extraOffset varOff];
                         end
                     else
                         warning('recalibrateData: Expected a vector, using default ignoring variable.')
@@ -86,19 +102,20 @@ for v=1:2:length(varargin)
         end
     else
         % since we already skipped make skip false again
-        skip=false;
+        skip=skip-1;
     end
 end
 %extra logic
 if  extraLinearVariablesNumber==0 || isempty(extraLinearVariables)
     extraLinearVariables=zeros(numberOfSamples,1);
     extraCoeff=extraCoeffDefaultValue;
+    extraOffset=0;
 end
 
 if ~isRawOffset
     recalibratedData=calibrationMatrix*rawData'+offset+extraCoeff*extraLinearVariables';
 else
-    recalibratedData=calibrationMatrix*(rawData'+offset)+extraCoeff*extraLinearVariables';
+    recalibratedData=calibrationMatrix*(rawData'+offset)+extraCoeff*(extraLinearVariables-extraOffset)';
 end
 recalibratedData=recalibratedData';
 
