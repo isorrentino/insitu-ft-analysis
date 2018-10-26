@@ -1,4 +1,4 @@
-function [estimationTypeNames]=generateEstimationTypeNames(estimationTypes,useTemperatureBooleans)
+function [estimationTypeNames]=generateEstimationTypeNames(estimationTypes,useTemperatureBooleans,useTemperatureOffset)
 estimationTypeNames{length(estimationTypes)}='';
   for namingIndex=1:length(estimationTypes)
         switch estimationTypes(namingIndex)
@@ -15,6 +15,11 @@ estimationTypeNames{length(estimationTypes)}='';
             name=strcat(name,'wT');
         else
             name=strcat(name,'nT');
+        end
+        if useTemperatureOffset(namingIndex)
+            name=strcat(name,'rTO');
+        else
+            name=strcat(name,'dTO');
         end
         estimationTypeNames{namingIndex}=name;
   end

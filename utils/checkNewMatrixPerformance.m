@@ -41,6 +41,10 @@ if (~any(strcmp('resultEvaluation', optionsFieldNames)))
     checkMatrixOptions.resultEvaluation=true;
     disp('checkNewMatrixPerformance: Using default value resultEvaluation=true');
 end
+if (~any(strcmp('otherCoeffFirstValAsOffset', optionsFieldNames)))
+    checkMatrixOptions.otherCoeffFirstValAsOffset=false;
+    disp('checkNewMatrixPerformance: Using default value otherCoeffFirstValAsOffset=false');
+end
 %% Check varargin logic
 for v=1:2:length(varargin)
     if(ischar(  varargin{v}))
@@ -98,13 +102,17 @@ for ftIdx =1:length(sensorsToAnalize)
         recabInput{recabnarin+2}=datasetToUse.(otherCoeffVarName).(ft);
         recabInput{recabnarin+4}=otherCoeff.(ft);
         recabnarin=recabnarin+4;
+        if checkMatrixOptions.otherCoeffFirstValAsOffset
+        recabInput{recabnarin+1}='varOff';            
+        recabInput{recabnarin+2}=datasetToUse.(otherCoeffVarName).(ft)(1);
+        end
     end
     [reCalibData.(ft),offsetInWrenchSpace.(ft)]=recalibrateData(datasetToUse.rawData.(ft),calibMatrices.(ft),...
         'offset',offset.(ft),'isRawOffset',isRawOffset,recabInput{:});
     % take out offset in the filtered data for comparison
     %             filteredOffset.(ft)=(datasetToUse.cMat.(ft)*offset.(ft)')';
-    filteredOffset.(ft)=mean(datasetToUse.filteredFtData.(ft)- datasetToUse.estimatedFtData.(ft)) ;
-    filteredNoOffset.(ft)=datasetToUse.filteredFtData.(ft) -repmat(filteredOffset.(ft),size(datasetToUse.filteredFtData.(ft),1),1);
+    filteredOffset.(ft)=mean(datasetToUse.estimatedFtData.(ft)-datasetToUse.filteredFtData.(ft)) ;
+    filteredNoOffset.(ft)=datasetToUse.filteredFtData.(ft) +repmat(filteredOffset.(ft),size(datasetToUse.filteredFtData.(ft),1),1);
     
     
     %% Plotting section

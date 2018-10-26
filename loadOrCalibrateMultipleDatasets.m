@@ -15,9 +15,9 @@ addpath utils
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     };
 experimentNames={ %iCubGenova02 experiments
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
+   % '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
+    %'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
     };
 
 % experimentNames={ %iCubGenova02 experiments
@@ -40,33 +40,34 @@ readOptions.printPlots=true;%true
 % Select sensors to calibrate the names are associated to the location of
 % the sensor in the robot
 % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
- lambdas=[
-%      0;
+% sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
+sensorsToAnalize = {'right_leg','left_leg'};
+% lambdas=[
+%     0;
 %     1;
-     5;
-     10;
+%     5;
+%     10;
 %     50;
-     100;
-     1000;
-     5000;
+%     100;
+%     1000;
+%     5000;
 %     10000;
 %     50000;
-     100000;
-     500000;
+%     100000;
+%     500000;
 %     1000000
-];
+%     ];
 % estimation types/
-estimationTypes=[1,1,3,3,4,4];
-useTempBooleans=[0,1,0,1,0,1];
-
-% lambdas=0;
+estimationTypes=[1,1,1,3,3,3,4,4,4];
+useTempBooleans=[0,1,1,0,1,1,0,1,1];
+useTempOffset  =[0,0,1,0,0,1,0,0,1];
+lambdas=0;
 % Create appropiate names for the lambda variables
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
     estimationNames={''};
 else
-estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans);
+    estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans,useTempOffset);
 end
 %
 combinationNumber=length(experimentNames)*length(lambdas)*length(estimationTypes);
@@ -120,7 +121,8 @@ for experimentIndex=1:length(experimentNames)
             lambdaName=lambdasNames{in};
             for type=1:length(estimationTypes)
                 calibOptions.estimateType=estimationTypes(type);%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
-                calibOptions.useTemperature=useTempBooleans(type);
+                calibOptions.useTemperature=useTempBooleans(type);                
+                calibOptions.temperatureOffset=useTempOffset(type); 
                 estimationName=estimationNames{type};
                 disp(strcat('e',num2str(experimentIndex),estimationName,lambdaName));
                 % calibrate
@@ -133,25 +135,26 @@ for experimentIndex=1:length(experimentNames)
                     saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
                     if ~exist('calibMatrices','var')
                         if exist(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'),'file')
-                        load(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'));
-                        %%TODO: add checking if all sensors to analize are in the results structure
-                        calibMatrices=results.calibrationMatrices;
-                        offset=results.offset;
-                        resultsFields=fieldnames(results);
-                        if ismember('temperatureCoeff',resultsFields)
-                            temperatureCoeff=results.temperatureCoeff;
-                        end
-                        saveResults=false;
+                            load(strcat('data/',experimentName,'/results/results',estimationName,lambdaName,'.mat'));
+                            %%TODO: add checking if all sensors to analize are in the results structure
+                            calibMatrices=results.calibrationMatrices;
+                            offset=results.offset;
+                            resultsFields=fieldnames(results);
+                            if ismember('temperatureCoeff',resultsFields)
+                                temperatureCoeff=results.temperatureCoeff;
+                            end
+                            saveResults=false;
                         else
                             fprintf('loadOrCalibrateMultipleDatasets: Nothing to do no results and no calculation done for %s %s %s',strcat('e',num2str(experimentIndex)),estimationName,lambdaName );
-                           somethingToCheck=false;
+                            somethingToCheck=false;
                             continue;
                         end
                     end
                     if somethingToCheck
-                    [reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
-%                     [reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
-                   
+                        checkMatrixOptions.otherCoeffFirstValAsOffset= calibOptions.temperatureOffset;
+                        [reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkNewMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+                        %                     [reCalibData,offsetInWrenchSpace,MSE,MSE_p]=checkMatrixPerformance(datasetToUse,sensorsToAnalize,calibMatrices,offset,checkMatrixOptions,'otherCoeff',temperatureCoeff,'varName','temperature');
+                        
                     end
                     %% Save the workspace again to include calib Matrices, scale and offset
                     %     %save recalibrated matrices, offsets, new wrenches, sensor serial
@@ -178,7 +181,7 @@ for experimentIndex=1:length(experimentNames)
                     offsetValues(counter)=offsetInWrenchSpace;
                     calibrationMatrices(counter)=calibMatrices;
                     if ~isempty(temperatureCoeff)
-                    temperatureCoeffs(counter)=temperatureCoeff;
+                        temperatureCoeffs(counter)=temperatureCoeff;
                     end
                     counter=counter+1;
                     clear results;
@@ -206,13 +209,13 @@ if (evaluate)
     offsetValuesArray=offsetValuesArray';
     OffsetValues=offsetValuesArray(1:length(sensorsToAnalize):end,:);
     for sa=2:length(sensorsToAnalize)
-    OffsetValues=[OffsetValues offsetValuesArray(sa:length(sensorsToAnalize):end,:)];
+        OffsetValues=[OffsetValues offsetValuesArray(sa:length(sensorsToAnalize):end,:)];
     end
     % each 6 columns is a sensor
     
     
     fullNames=fullNames';
-     saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
+    saveResults=readOptions.saveData; % for the time being save if readOption.saveData is true
     if(saveResults )
         allResults.fullNames=fullNames;
         for sta=1:length(sensorsToAnalize)

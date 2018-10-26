@@ -23,6 +23,12 @@ if calibOptions.useTemperature
         varInput{narin+1}='withTemperature';
         varInput{narin+2}=true;
         narin=narin+2;
+        % temperature offset
+        if calibOptions.temperatureOffset
+            varInput{narin+1}='temperatureOffset';
+            varInput{narin+2}=true;
+            narin=narin+2;
+        end
     end
 end
 [calibMatrices,fullscale,offset,temperatureCoeff]=useLinearModelToCalibrate(dataset,sensorsToAnalize,...
@@ -69,7 +75,11 @@ if(calibOptions.saveMat)
         full_scale=fullscale.(ft);
         if ~isempty(temperatureCoeff)
             offsetInForce=firmwareMat*offset.(ft)';
-            allOffsets=[offsetInForce;dataset.temperature.(ft)(1)];
+            if calibOptions.temperatureOffset
+                allOffsets=[offsetInForce;dataset.temperature.(ft)(1)];
+            else
+                allOffsets=[offsetInForce;0];
+            end
             writeCalibMat(firmwareMat, full_scale, filename,'extraCoeffs',temperatureCoeff.(ft),'offsets',allOffsets)
         else
             writeCalibMat(firmwareMat, full_scale, filename)

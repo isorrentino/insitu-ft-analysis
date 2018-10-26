@@ -1,5 +1,5 @@
 clear all
-close all
+% close all
 clc
 %% Calibrate a sensor
 % This script allows to calibrate six axis force torque (F/T)
@@ -52,9 +52,10 @@ readOptions.matFileName='ftDataset'; % name of the mat file used for save the ex
 readOptions.printPlots=false;%true
     % name and paths of the experiment files
     % change name to desired experiment folder
-%    experimentName='/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';
+    experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+    %'/green-iCub-Insitu-Datasets/2018_07_10_Grid';
    
-   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
+%   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
 %    experimentName= '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2';% Name of the experiment;
 % experimentName='icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
 % experimentName='/green-iCub-Insitu-Datasets/2018_07_10_LeftYogaWarm';
@@ -64,9 +65,9 @@ readOptions.printPlots=false;%true
     % Select sensors to calibrate the names are associated to the location of
     % the sensor in the robot
     % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-sensorsToAnalize = {'right_leg','left_leg'};
+sensorsToAnalize = {'right_leg'};
     %Regularization parameter
-lambda=1000;
+lambda=0;
 if (lambda==0)
     lambdaName='';
 else
@@ -75,16 +76,18 @@ end
 % lambdaName='';
     %calibration script options
 calibOptions.saveMat=true;
-calibOptions.estimateType=1;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
+calibOptions.estimateType=3;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
 calibOptions.useTemperature=true;
+calibOptions.temperatureOffset=false;
     % Calibrate
 calibrationStep
 
 %% Check results
 checkMatrixOptions.plotForceSpace=true;
-checkMatrixOptions.plotForceVsTime=false;
+checkMatrixOptions.plotForceVsTime=true;
 checkMatrixOptions.secMatrixFormat=false;
 checkMatrixOptions.resultEvaluation=true;
+checkMatrixOptions.otherCoeffFirstValAsOffset= calibOptions.temperatureOffset;
 %% logic to select data in which we will test the result
 datasetToUse=dataset;
 if extraSampleAvailable

@@ -16,11 +16,13 @@ useExtraSample=true;
 extraSamplesAvailable=false;
 withRegularization=true;
 withTemperature=false;
+temperatureOffset=false;
 estimationType=1; %0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on main dataset, 4 is oneshot
 narin=0;
 cMat=[];
 lambda=0;
 temperature=[];
+tempOffset=0;
 varInput={};
 %% Check varargin for variables
 for v=1:2:length(varargin)
@@ -58,6 +60,12 @@ for v=1:2:length(varargin)
             case {'withTemperature','withtemperature','temperature'}
                 if logical(varargin{v+1})
                     withTemperature=varargin{v+1};
+                else
+                    warning('useLinearModelToCalibrate: Expected logical, using default withTemperature value.')
+                end
+            case {'temperatureOffset','temperatureoffset','tempOffset'}
+                if logical(varargin{v+1})
+                    temperatureOffset=varargin{v+1};
                 else
                     warning('useLinearModelToCalibrate: Expected logical, using default withTemperature value.')
                 end
@@ -159,8 +167,11 @@ for ftIdx =1:length(sensorsToAnalize)
         varInput{cmatIndex}=cMat.(ft);
     end
     if withTemperature
-        if any(strcmp(ft,fieldnames(temperature)))
-            varInput{temperatureDataIndex}=temperature.(ft);
+        if any(strcmp(ft,fieldnames(temperature)))            
+            if temperatureOffset
+                tempOffset=temperature.(ft)(1);
+            end
+            varInput{temperatureDataIndex}=temperature.(ft)-tempOffset;
             varInput{temperatureDataIndex-1}='addLinearVariable';
         else
             varInput{temperatureDataIndex-1}='nothing';
@@ -183,7 +194,7 @@ for ftIdx =1:length(sensorsToAnalize)
             [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
             if estimationType==2
                 if sum(tempCoeff)~=0
-                    offsetInForce=meanEst'-calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft));
+                    offsetInForce=meanEst'-(calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft)-tempOffset));
                 else
                     offsetInForce=meanEst'-calibMatrices.(ft)*meanFt';
                 end
@@ -192,14 +203,14 @@ for ftIdx =1:length(sensorsToAnalize)
         end
     end
     %% no mean dataset
-    if estimationType==3
-        rawToUse=rawData.(ft);
-        expectedWrench=estimatedFtData.(ft);
-        [calibMatrices.(ft),fullscale.(ft),offsetInForce,tempCoeff]=...
-            estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
-        offset.(ft)=calibMatrices.(ft)\offsetInForce;
-        varInput{offsetIndex}=false;
-    end
+%     if estimationType==3
+%         rawToUse=rawData.(ft);
+%         expectedWrench=estimatedFtData.(ft);
+%         [calibMatrices.(ft),fullscale.(ft),offsetInForce,tempCoeff]=...
+%             estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
+%         offset.(ft)=calibMatrices.(ft)\offsetInForce;
+%         varInput{offsetIndex}=false;
+%     end
     if estimationType<3
         %% correct dimensions of the offset if needed before use
         [rows,columns]=size(offset.(ft));
@@ -212,7 +223,7 @@ for ftIdx =1:length(sensorsToAnalize)
         if withTemperature
             [calibrationRequired,stackedExpectedWrench,stackedRawtoUse, stackedTemperature]= stackLogic(dataset,ft,extraSample,fieldsToStack);
             if calibrationRequired %% insert temperature  in format for calibration
-                varInput{temperatureDataIndex}= stackedTemperature;
+                varInput{temperatureDataIndex}= stackedTemperature-tempOffset;
             end
         else
             [calibrationRequired,stackedExpectedWrench,stackedRawtoUse]= stackLogic(dataset,ft,extraSample,fieldsToStack);
@@ -248,7 +259,7 @@ for ftIdx =1:length(sensorsToAnalize)
                 end
                 [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
                 if sum(tempCoeff)~=0
-                    offsetInForce=meanEst'-calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft));
+                    offsetInForce=meanEst'-(calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft)-tempOffset));
                 else
                     offsetInForce=meanEst'-calibMatrices.(ft)*meanFt';
                 end
