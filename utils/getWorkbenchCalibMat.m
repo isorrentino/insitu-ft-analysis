@@ -1,4 +1,4 @@
-function [calibMatrix]=getWorkbenchCalibMat(pathFile,serialNumber)
+function calibMatrix=getWorkbenchCalibMat(pathFile,serialNumber)
     if (exist(strcat(pathFile,'matrix_',serialNumber,'.txt'),'file')==2)
         calibMatrix=readCalibMat(strcat(pathFile,'matrix_',serialNumber,'.txt'));        
     else
@@ -20,6 +20,7 @@ function [calibMatrix]=getWorkbenchCalibMat(pathFile,serialNumber)
                 end
             end
         end
+       
     end    
     if exist('sourceFile','var')
         copyfile(sourceFile,destinationFile);

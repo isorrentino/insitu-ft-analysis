@@ -18,8 +18,8 @@ function [dataset,estimator,input,extraSample]=readExperiment(experimentName,scr
 %Input variables:
 %   experimentName: address and name of the experiment in the data folder
 %   scriptOptions should include :
-%       scriptOptions.forceCalculation=true;%false;
-%       scriptOptions.saveData=true;%true
+%       scriptOptions.forceCalculation=false;%false;
+%       scriptOptions.saveData=false;%true
 %       scriptOptions.testDir=false;% true
 %       scriptOptions.filterData=true;
 %       scriptOptions.raw=false;
