@@ -113,7 +113,7 @@ if  extraLinearVariablesNumber==0 || isempty(extraLinearVariables)
 end
 
 if ~isRawOffset
-    recalibratedData=calibrationMatrix*rawData'+offset+extraCoeff*extraLinearVariables';
+    recalibratedData=calibrationMatrix*rawData'+offset+extraCoeff*(extraLinearVariables-extraOffset)';
 else
     recalibratedData=calibrationMatrix*(rawData'+offset)+extraCoeff*(extraLinearVariables-extraOffset)';
 end
