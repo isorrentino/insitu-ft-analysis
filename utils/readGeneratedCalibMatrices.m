@@ -15,7 +15,8 @@ for i=1:length(experimentNames)
     for ii=1:size(input.calibMatFileNames,1) % no offset in workbench matrix
         WorkbenchMat.(ftNames{ii})=getWorkbenchCalibMat(strcat(prefixDir,input.calibMatPath),input.calibMatFileNames{ii});
         secMat.(names2use{1}).(ftNames{ii})=eye(6);
-        extraCoeff.(names2use{1}).(ftNames{ii})=zeros(6,1);  
+        extraCoeff.(names2use{1}).(ftNames{ii})=zeros(6,1);
+        extraCoeffOffset.(names2use{1}).(ftNames{ii})=0;
     end
 
     cMat.(names2use{1})=WorkbenchMat; %first dataset to compare is the orignal workbench

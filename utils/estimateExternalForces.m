@@ -15,16 +15,16 @@ function [externalWrenches,time,jointTorques,externalWrenchesAtSensorFrame]= est
 useInertial=false;
 mask=[];
 sensorsToAnalize=NaN;
-extraLinearVariablesNumber=0;
 useEstimatedData=true;
 extraCoeff=NaN;
 extraLinearVariables=NaN;
+extraOffset=NaN;
 numberOfSamples=length(dataset.time);
 secNames=fieldnames(secMat);
 outputSize=size(secMat.(secNames{1}),1);
 extraCoeffDefaultValue=zeros(outputSize,1);
 if(~isempty(varargin))
-    skip=false;
+    skip=0;
     if mod(length(varargin),2)==0
         for v=1:2:length(varargin)
             if ~skip
@@ -60,6 +60,7 @@ if(~isempty(varargin))
                                 contentNames= fieldnames(content);
                                 extraLinearVariables=struct();
                                 extraCoeff=struct();
+                                extraOffset=struct();
                                 for namesIndex=1:length(contentNames)
                                     contentName=contentNames{namesIndex};
                                     if length(content.(contentName))==numberOfSamples
@@ -68,9 +69,9 @@ if(~isempty(varargin))
                                         else
                                             extraLinearVariables.(contentName)=[extraLinearVariables.(contentName) content.(contentName)];
                                         end
-                                        extraLinearVariablesNumber=extraLinearVariablesNumber+1;
                                         %% check if there is previous information on this new linear variable to consider
-                                        tempPrevLinVar=extraCoeffDefaultValue;
+                                        tempPrevLinVar=extraCoeffDefaultValue;                                        
+                                        varOff=0;
                                         if v+3<=length(varargin) % needs 3 more options in varargin to check this
                                             vtoCheck=varargin{v+2};
                                             vtoCheckValue=varargin{v+3};
@@ -79,9 +80,22 @@ if(~isempty(varargin))
                                                     if isvector(vtoCheckValue.(contentName))
                                                         if (sum(size(vtoCheckValue.(contentName))) ==(outputSize+1) && (size(vtoCheckValue.(contentName),1)==outputSize || size(vtoCheckValue.(contentName),2)==outputSize) )
                                                             tempPrevLinVar=vtoCheckValue.(contentName);
-                                                            skip=true;
+                                                            skip=skip+1;
+                                                            % check if there is some offset
+                                                            % for this variable
+                                                            if v+5<=length(varargin) % needs 3 more options in varargin to check this
+                                                                vtoCheck2=varargin{v+4};
+                                                                vtoCheckValue2=varargin{v+5};
+                                                                if sum(strcmpi(vtoCheck2,{'extvaroffset','LinVarOff','varOff','extOff','linear variable offset','extra linear variable offset'}))>0
+                                                                    if length(vtoCheckValue2.(contentName))==1
+                                                                        varOff=vtoCheckValue2.(contentName);
+                                                                        skip=skip+1;
+                                                                    else
+                                                                        warning('estimateExternalForces: expected one value for the offset');
+                                                                    end
+                                                                end
+                                                            end
                                                         else
-                                                            skip=false || skip;
                                                             warning('estimateExternalForces: this vector is not of the right dimensions, ignoring vector');
                                                         end
                                                     else
@@ -98,6 +112,11 @@ if(~isempty(varargin))
                                             extraCoeff.(contentName)=tempPrevLinVar;
                                         else
                                             extraCoeff.(contentName)=[extraCoeff.(contentName) tempPrevLinVar];
+                                        end
+                                        if ~ismember(contentName,fieldnames(extraOffset))
+                                            extraOffset.(contentName)=varOff;
+                                        else
+                                            extraOffset.(contentName)=[extraOffset.(contentName) varOff];
                                         end
                                     end
                                 end
@@ -116,7 +135,7 @@ if(~isempty(varargin))
                 end
             else
                 % since we already skipped make skip false again
-                skip=false;
+                skip=skip-1;
             end
         end
     else
@@ -140,20 +159,20 @@ for sIndex=1:length(sensorsToAnalize)
     if ~isstruct(extraCoeff)
         extraCoeff=struct();
         extraLinearVariables=struct();
+        extraOffset=struct();
         extraCoeff.(ft)=zeros(outputSize,1);
         extraLinearVariables.(ft)=zeros(size(dataset.time));
+        extraOffset.(ft)=0;
     else
         if ~strcmp((ft),fieldnames(extraCoeff))
             extraCoeff.(ft)=zeros(outputSize,1);
             extraLinearVariables.(ft)=zeros(size(dataset.time));
+            extraOffset.(ft)=0;
         end
     end
     desiredSensorsIndex(sIndex)= find(strcmp(sNames,(ft)));
 end
 
-
-%TODO: might be easier to just get the indexes of the time start and finish
-%of the time frame and just take those values for t
 %% Load the estimator
 
 % Create estimator class
@@ -229,7 +248,8 @@ end
 
 %size of array with the expected Data
 externalWrenchData=zeros(length(framesNames),size(dataset.time,1),6);
-externalWrenchOnSensorFrame=zeros(length(framesNames),size(dataset.time,1),6);
+% TODO: initialize externalWrenchAtSensorFrame, which is a struct with the
+% frames to analize and sensors to analize
 jointTorques=zeros(size(qj_all));
 %% For each time instant
 fprintf('estimateExternalForces: Computing the estimated wrenches\n');
@@ -257,13 +277,13 @@ for t=1:length(dataset.time)
         sIndx= find(strcmp(sensorsToAnalize,sNames(matchup(ftIndex+1))));
         
         if(~isempty(sIndx))
-            wrench_idyn.fromMatlab( (secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)')-offset.(sNames{matchup(ftIndex+1)})...
-                + extraCoeff.(sensorsToAnalize{sIndx})*extraLinearVariables.(sNames{matchup(ftIndex+1)})(t,:)');
+            wrench_idyn.fromMatlab( (secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)')+offset.(sNames{matchup(ftIndex+1)})...
+                + extraCoeff.(sensorsToAnalize{sIndx})*(extraLinearVariables.(sNames{matchup(ftIndex+1)})(t,:)-extraOffset.(sNames{matchup(ftIndex+1)}))');
         else
             if useEstimatedData
                 wrench_idyn.fromMatlab( dataset.estimatedFtData.(sNames{matchup(ftIndex+1)})(t,:)');
             else
-                wrench_idyn.fromMatlab( dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)'-offset.(sNames{matchup(ftIndex+1)}));
+                wrench_idyn.fromMatlab( dataset.ftData.(sNames{matchup(ftIndex+1)})(t,:)'+offset.(sNames{matchup(ftIndex+1)}));
             end
         end
         ok = estFTmeasurements.setMeasurement(iDynTree.SIX_AXIS_FORCE_TORQUE,ftIndex,wrench_idyn);

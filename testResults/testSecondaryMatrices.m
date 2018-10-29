@@ -1,15 +1,15 @@
-clear all
-close all
+%clear all
+%close all
 clc
 addpath utils
 addpath external/quadfit
 %% Prepare options of the test
 scriptOptions = {};
-scriptOptions.testDir=true;% to calculate the raw data, for recalibration always true
+scriptOptions.testDir=true;
 scriptOptions.matFileName='ftDataset';
 scriptOptions.printAll=true;
 % Script of the mat file used for save the intermediate results
-%scriptOptions.saveDataAll=true;
+%   scriptOptions.saveDataAll=true;
 %% Select datasets with which the matrices where generated and lambda values
 %Use only datasets where the same sensor is used
 % experimentNames={   
@@ -19,13 +19,13 @@ scriptOptions.printAll=true;
 %     }; %this set is from iCubGenova04
 experimentNames={ %iCubGenova02 experiments
 %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
-%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
+    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
     };
 names={'Workbench';
 %     'noTz';    
-%      'multiple';
-    'all';
+     'multiple';
+%     'all';
     };% except for the first one all others are short names for the expermients in experimentNames
 lambdas=[0];
 % estimationTypes=[1,4];
@@ -45,17 +45,19 @@ lambdas=[0];
 %      500000;
 % %     1000000
 % ];
-% estimation types/
-% estimationTypes=[1,1,3,3,4,4];
-% useTempBooleans=[0,1,0,1,0,1];
+% % estimation types/
+% estimationTypes=[1,1,1,3,3,3,4,4,4];
+% useTempBooleans=[0,1,1,0,1,1,0,1,1];
+% useTempOffset  =[0,0,1,0,0,1,0,0,1];
 estimationTypes=[1];
-useTempBooleans=[0];
+useTempBooleans=[1];
+useTempOffset  =[1];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
     estimationNames={''};
 else
-estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans);
+estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans,useTempOffset);
 end
 calibrationFileNames=generateCalibrationFileNames(lambdasNames,estimationNames);
 names2use=generateCalibrationFileNames(names(2:end),calibrationFileNames);
@@ -74,16 +76,19 @@ sensorName={'r_leg_ft_sensor'};
 
 %% Read the calibration matrices to evaluate
 
-[cMat,secMat,WorkbenchMat,extraCoeff]=readGeneratedCalibMatrices(experimentNames,scriptOptions,sensorsToAnalize,names2use,calibrationFileNames);
+[cMat,secMat,WorkbenchMat,extraCoeff,offsets,extraCoeffOffset]=readGeneratedCalibMatrices(experimentNames,scriptOptions,sensorsToAnalize,names2use,calibrationFileNames);
 
 % %% Select datasets in which the matrices will be evaluated
 
-toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
-toCompareNames={'Grid39Degree','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
+% toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
+% toCompareNames={'Grid39Degree','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
+% reduceBy=[100,10,10,10]; % value used in datasampling;
+toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
+toCompareNames={'tz2','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
 reduceBy=[100,10,10,10]; % value used in datasampling;
 % toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
 % toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
-
+useKnownOffset=false;
 compareDatasetOptions = {};
 compareDatasetOptions.forceCalculation=false;%false;
 compareDatasetOptions.saveData=true;%true
@@ -123,18 +128,33 @@ for c=1:length(toCompare)
         error('testSecondaryMatrices: begining and end of the samples in which the offset will be calculated should be provided for all data sets to compare');
         
     end
-    % subsample dataset to speed up computations
-    for i=1:length(names2use)
-        [offset.(toCompareNames{c}).(names2use{i})]=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{i}));
+    % compute offset or store known offset
+    % workbench does not currently have a known offset
+    offset.(toCompareNames{c}).(names2use{1})=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{1}));
+    % for all other matrices
+    for i=2:length(names2use)
+        calculatedOffset=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{i}));
+        if useKnownOffset
+            sensorFieldNames=fieldnames(calculatedOffset);
+            for sensor=1:length(sensorFieldNames)
+                sIndx= find(strcmp(sensorsToAnalize,sensorFieldNames(sensor)));
+                if(isempty(sIndx))
+                    offsetToUse.(sensorFieldNames{sensor})=calculatedOffset.(sensorFieldNames{sensor});
+                else
+                     offsetToUse.(sensorFieldNames{sensor})=offsets.(names2use{i}).(sensorFieldNames{sensor});
+                end
+            end
+        else
+            offsetToUse=calculatedOffset;
+        end
+        offset.(toCompareNames{c}).(names2use{i})=offsetToUse;
     end
-    
     %TODO: should I filter before sampling? Or avoid data sampling and filtering to have more real like results
     fprintf('Filtering %s \n',(toCompareNames{c}));
     [data.(toCompareNames{c}).ftData,mask]=filterFtData(data.(toCompareNames{c}).ftData);
     data.(toCompareNames{c})=applyMask(data.(toCompareNames{c}),mask);
-    [data.(toCompareNames{c}),~]= dataSampling(data.(toCompareNames{c}),reduceBy(c));
-    
-    
+    % subsample dataset to speed up computations
+    [data.(toCompareNames{c}),~]= dataSampling(data.(toCompareNames{c}),reduceBy(c));    
     
     %% Comparison
     framesNames={'l_sole','r_sole','l_upper_leg','r_upper_leg','root_link','l_elbow_1','r_elbow_1',}; %there has to be atleast 6
@@ -157,13 +177,16 @@ for c=1:length(toCompare)
                     'sensorsToAnalize',sensorsToAnalize(j));
             else
                 sensorsExtraCoeff.(sensorsToAnalize{j})=extraCoeff.(names2use{i}).(sensorsToAnalize{j});
+                sensorsExtraOff.(sensorsToAnalize{j})=extraCoeffOffset.(names2use{i}).(sensorsToAnalize{j});
+                
                 [results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForces,...
                     results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime,~,...
                     results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForcesAtSensorFrame]=...
-                    estimateExternalForces... 
+                    estimateExternalForces...
                     (input.robotName,data.(toCompareNames{c}),sMat,input.sensorNames,...
                     input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),...
-                    'sensorsToAnalize',sensorsToAnalize(j),'extraVar',data.(toCompareNames{c}).temperature,'extraCoeff',sensorsExtraCoeff);
+                    'sensorsToAnalize',sensorsToAnalize(j),'extraVar',data.(toCompareNames{c}).temperature,'extraCoeff',sensorsExtraCoeff,...
+                    'extoff',sensorsExtraOff);
             end
             % we restrict the offset to be used to only the sensor we are
             % analizing by passing in sensorstoAnalize only the sensor we
@@ -183,10 +206,11 @@ for c=1:length(toCompare)
 end
 %% Save external forces
  for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 sensors in the same leg
-extForceResults.results=stackedResults.(sensorsToAnalize{j});
+extForceResults.results.(sensorsToAnalize{j})=stackedResults.(sensorsToAnalize{j});
 extForceResults.lambdas=lambdas;
 extForceResults.estimationTypes=estimationTypes;
 extForceResults.useTempBooleans=useTempBooleans;
+extForceResults.useTempOffset=useTempOffset;
 extForceResults.names.names2use=names2use;
 extForceResults.names.toCompare=toCompareNames;
 extForceResults.names.experimentNames=names;
