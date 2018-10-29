@@ -1,5 +1,5 @@
 %% Evaluate error
-loadResult=true;
+loadResult=false;
 % convert from extForceResults structure to what is used here
 if exist('stackedResults','var') && ~loadResult
     names2evaluate=names2use;
@@ -20,7 +20,7 @@ else
     WorkbenchMat=cMat.Workbench;
     lambdas=extForceResults.lambdas;
     lambdasNames=generateLambdaNames(extForceResults.lambdas);
-    estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans);
+    estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans,extForceResults.useTempOffset);
     names=extForceResults.names.experimentNames;
     sensorsToAnalize={'right_leg'};%fieldnames(extForceResults.results); % this bring all sensors that were estimated not neccesarily the ones to analize
     sensorName={'r_leg_ft_sensor'};
