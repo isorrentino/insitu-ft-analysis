@@ -50,8 +50,8 @@ lambdas=[0];
 % useTempBooleans=[0,1,1,0,1,1,0,1,1];
 % useTempOffset  =[0,0,1,0,0,1,0,0,1];
 estimationTypes=[1];
-useTempBooleans=[1];
-useTempOffset  =[1];
+useTempBooleans=[0];
+useTempOffset  =[0];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
@@ -88,7 +88,7 @@ toCompareNames={'tz2','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % sh
 reduceBy=[100,10,10,10]; % value used in datasampling;
 % toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
 % toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
-useKnownOffset=false;
+useKnownOffset=true;
 compareDatasetOptions = {};
 compareDatasetOptions.forceCalculation=false;%false;
 compareDatasetOptions.saveData=true;%true
@@ -138,7 +138,7 @@ for c=1:length(toCompare)
             sensorFieldNames=fieldnames(calculatedOffset);
             for sensor=1:length(sensorFieldNames)
                 sIndx= find(strcmp(sensorsToAnalize,sensorFieldNames(sensor)));
-                if(isempty(sIndx))
+                if(isempty(sIndx)) || isempty(offsets.(names2use{i}).(sensorFieldNames{sensor})) % TODO: probably the sIndx condition will be removed
                     offsetToUse.(sensorFieldNames{sensor})=calculatedOffset.(sensorFieldNames{sensor});
                 else
                      offsetToUse.(sensorFieldNames{sensor})=offsets.(names2use{i}).(sensorFieldNames{sensor});
