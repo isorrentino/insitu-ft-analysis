@@ -78,6 +78,45 @@ torso='torso'; value6={'torso_yaw';'torso_roll';'torso_pitch'};
 input.stateNames=struct(head,{value1},left_arm,{value2},left_leg,{value3},right_arm,{value4},right_leg,{value5},torso,{value6});
 
 %-----------------------------------------------------------
+%% Predefine model order (needed for establishing the order for model loader in idyntree)
+input.jointOrder={
+    'r_hip_pitch';
+    'r_hip_roll';
+    'r_hip_yaw';
+    'r_knee';
+    'r_ankle_pitch';
+    'r_ankle_roll';
+    'l_hip_pitch';
+    'l_hip_roll';
+    'l_hip_yaw';
+    'l_knee';
+    'l_ankle_pitch';
+    'l_ankle_roll';
+    'torso_pitch';
+    'torso_roll';
+    'torso_yaw';
+    'r_shoulder_pitch';
+    'r_shoulder_roll';
+    'r_shoulder_yaw';
+    'r_elbow';
+    'r_wrist_prosup';
+    'r_wrist_pitch';
+    'r_wrist_yaw';
+    'l_shoulder_pitch';
+    'l_shoulder_roll';
+    'l_shoulder_yaw';
+    'l_elbow';
+    'l_wrist_prosup';
+    'l_wrist_pitch';
+    'l_wrist_yaw';
+    'neck_pitch';
+    'neck_roll';
+    'neck_yaw'
+    };
+
+
+
+
 %% Mini checks
 if(size (input.calibMatFileNames)~=size (input.ftNames))
     disp('amount of calibration matrix files does not match the amount of sensors available in the dataset')

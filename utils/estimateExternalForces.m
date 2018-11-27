@@ -179,7 +179,20 @@ end
 estimator = iDynTree.ExtWrenchesAndJointTorquesEstimator();
 
 % Load model and sensors from the URDF file
-estimator.loadModelAndSensorsFromFile(strcat('./robots/',robotName,'.urdf'));
+% estimator.loadModelAndSensorsFromFile(strcat('./robots/',robotName,'.urdf'));
+dofs = length(dataset.jointNames);
+consideredJoints = iDynTree.StringVector();
+for i=1:dofs %-4 ensures avoiding the 3 last neck joints
+ 
+    consideredJoints.push_back( (dataset.jointNames{i}));
+end
+for i=1:length(input.sensorNames)
+    consideredJoints.push_back( (input.sensorNames{i}));    
+end
+
+estimatorLoader = iDynTree.ModelLoader();
+estimatorLoader.loadReducedModelFromFile(strcat('./robots/',input.robotName,'.urdf'),consideredJoints);
+estimator.setModelAndSensors(estimatorLoader.model(),estimatorLoader.sensors);
 
 % Create KinDynComputations class variable
 kinDyn = iDynTree.KinDynComputations();

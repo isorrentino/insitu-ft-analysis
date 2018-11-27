@@ -111,33 +111,42 @@ end
 % Create estimator class
 estimator = iDynTree.ExtWrenchesAndJointTorquesEstimator();
 
-% Load model and sensors from the URDF file
-estimator.loadModelAndSensorsFromFile(strcat('./robots/',input.robotName,'.urdf'));
+% % Load model and sensors from the URDF file
+% estimator.loadModelAndSensorsFromFile(strcat('./robots/',input.robotName,'.urdf'));
 
-dofs = estimator.model().getNrOfDOFs();
+dofs = length(dataset.jointNames);
 consideredJoints = iDynTree.StringVector();
-for i=0:dofs-4 %-4 ensures avoiding the 3 last neck joints
-    %for i=0:dofs-1
-    % disp(strcat('name=',estimator.model().getJointName(i),' , index=',num2str(i)))
-    names{i+1}=estimator.model().getJointName(i);
-    
-    consideredJoints.push_back( (names{i+1}));
+for i=1:dofs %-4 ensures avoiding the 3 last neck joints
+ 
+    consideredJoints.push_back( (dataset.jointNames{i}));
 end
+for i=1:length(input.sensorNames)
+    consideredJoints.push_back( (input.sensorNames{i}));    
+end
+
+estimatorLoader = iDynTree.ModelLoader();
+estimatorLoader.loadReducedModelFromFile(strcat('./robots/',input.robotName,'.urdf'),consideredJoints);
+estimator.setModelAndSensors(estimatorLoader.model(),estimatorLoader.sensors);
+
 %% set iCubViz variables
+cd ('external/iCubViz/')
 mdlLdr = iDynTree.ModelLoader();
-mdlLdr.loadReducedModelFromFile(strcat('external/iCubViz/','model.urdf'),consideredJoints);
+%mdlLdr.loadReducedModelFromFile(strcat('external/iCubViz/','model.urdf'),consideredJoints);
+mdlLdr.loadReducedModelFromFile('model.urdf',consideredJoints);
 model = mdlLdr.model();
 viz3 = iDynTree.Visualizer();
 viz3.init();
 viz3.addModel(model,'icub');
 viz3.draw();
-
+cd ('../../')
 %camara positioning
 if (strcmp('root_link',fixedFrame))
-    cPos=iDynTree.Position(-1,-1,1.5); %depends on the initial position of the reference frame. Root link has a -x direction
+    cPos=iDynTree.Position(-.65,-.2,1); %depends on the initial position of the reference frame. Root link has a -x direction
 else
-    cPos=iDynTree.Position(1,1,1.5); %depends on the initial position of the reference frame. Root link has a -x direction
+    cPos=iDynTree.Position(.65,.2,1); %depends on the initial position of the reference frame. Root link has a -x direction
 end
+cTarg=iDynTree.Position(0,0,0.5); %depends on the initial position of the reference frame. Root link has a -x direction
+viz3.camera().setTarget(cTarg)
 viz3.camera().setPosition(cPos);
 %% Setting axis and handlers for forces plots
 H.handle=figure,
@@ -219,7 +228,7 @@ if(~video)
     % create save button
     saveButton = uicontrol('Style', 'pushbutton', 'String', 'Save',...
         'Position', [10 40 40 20],...
-        'Callback', {@callBackSaveButton,dataset,uiHandles.sliderHandle});
+        'Callback', {@callBackSaveButton,dataset,uiHandles.sliderHandle,viz3});
     % create button group
     radioButtonsGroup = uibuttongroup(H.handle,'Visible','off',...
         'Position',[0.9 0 0.1 .05],...
@@ -334,19 +343,23 @@ end
         end
     end
 
-    function callBackSaveButton(hObject,evt,dataset,sliderHandle)
+    function callBackSaveButton(hObject,evt,dataset,sliderHandle,viz3)
         sliderValue=round(sliderHandle.Value);
         sample=round(sliderValue);
         timeSample=dataset.time(round(sliderValue))-dataset.time(1);
+        imageName=strcat('robotPosition_',num2str(sample));
         if intervalIni
             storedInis=[storedInis sample];
             storedTimeInis=[storedTimeInis timeSample];
             storedTimeInis=sort(storedTimeInis);
+            imageName=strcat(imageName,'_ini');
         else
             storedEnds=[storedEnds sample];
             storedTimeEnds=[timeSample storedTimeEnds];
             storedTimeEnds=sort(storedTimeEnds);
+            imageName=strcat(imageName,'_end');
         end
+        viz3.drawToFile(strcat(imageName,'.png'));
     end
 
     function editText(Hobj,evt,uiHandles,dataset,sensorsToAnalize,odom,viz3,H,whichFtData,estimatedAvailable,fixedFrame,jointPos,model,varargin)
