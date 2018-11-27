@@ -1,5 +1,5 @@
 function [dataset,endMask,contactFrame]=estimateDynamicsUsingIntervals(dataset,estimator,input,useInertial)
-calculateAcc=true;
+calculateAcc=false;
 endMask=~logical(dataset.time);
 contactFrame=cell(length(dataset.time),1);
 %% Manage intervals

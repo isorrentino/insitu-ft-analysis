@@ -9,8 +9,10 @@ addpath utils
 addpath external/quadfit
 
 %experimentName='dataSamples/First_Time_Sensor';%
-experimentName='green-iCub-Insitu-Datasets/2018_07_10_LeftYoga';
-% experimentName='green-iCub-Insitu-Datasets/yoga in loop';
+ experimentName='green-iCub-Insitu-Datasets/2018_07_10_Grid';
+
+%     experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_3';
+%experimentName='green-iCub-Insitu-Datasets/heatonrightankle';
 
 
 %Desired inspection sections
@@ -56,7 +58,7 @@ refNames=fieldnames(referenceExp);
 
 %% Read data
 scriptOptions = {};
-scriptOptions.forceCalculation=false;%false;
+scriptOptions.forceCalculation=true;%false;
 if(checkSaturation)
     scriptOptions.raw=true;
 end
@@ -78,7 +80,7 @@ if any(input.type)
    type=input.type; 
 end
 names=fieldnames(dataset.ftData);
-sensorsToAnalize={'right_leg';'left_leg'};
+sensorsToAnalize={'right_foot'};
 %%
 if(checkSaturation)
     for ftIdx =1:length(sensorsToAnalize)
@@ -156,10 +158,18 @@ if (compareTemperature)
     if (length(names)>length(sensorsToAnalize))
         for ftIdx =1:length(sensorsToAnalize)
             ft = sensorsToAnalize{ftIdx};
-            toPlot.(ft)=dataset.ftData.(ft);
-            toPlotFiltered.(ft)=dataset.filteredFtData.(ft);
-            figure,plot(dataset.temperature.(ft),toPlot.(ft)-dataset.estimatedFtData.(ft),'.')
-            figure,plot(dataset.temperature.(ft),toPlotFiltered.(ft)-dataset.estimatedFtData.(ft),'.')
+            toPlot.(ft)=dataset.ftData.(ft)-dataset.ftData.(ft)(1,:);
+            toPlotFiltered.(ft)=dataset.filteredFtData.(ft)-dataset.filteredFtData.(ft)(1,:);
+%             figure,plot(dataset.temperature.(ft),dataset.filteredFtData.(ft)(:,4)-dataset.filteredFtData.(ft)(1,4),'.','color',colorm(4,:)); hold on;
+%             plot(dataset.temperature.(ft),dataset.filteredFtData.(ft)(:,5)-dataset.filteredFtData.(ft)(1,5),'.','color',colorm(5,:))
+%             plot(dataset.temperature.(ft),dataset.filteredFtData.(ft)(:,6)-dataset.filteredFtData.(ft)(1,6),'.','color',colorm(6,:))
+figure,plot(dataset.temperature.(ft),dataset.filteredFtData.(ft)-dataset.filteredFtData.(ft)(1,:),'.'); hold on
+            title('Temperature effect on force torque measurements');
+            xlabel('Temperature ^oC');
+            ylabel('N/Nm');
+            legend('\tau_{x}','\tau_{y}','\tau_{z}');
+             %legend('F_{x}','F_{y}','F_{z}','\tau_{x}','\tau_{y}','\tau_{z}');
+            legendmarkeradjust(20);
             FTplots(toPlot,dataset.temperature.(ft),'xAxisAsIs');
             FTplots(toPlotFiltered,dataset.temperature.(ft),'xAxisAsIs');
         end
@@ -170,6 +180,6 @@ if (visualizeData)
     global storedInis storedEnds storedTimeInis storedTimeEnds
    visualizeExperiment(dataset,input,sensorsToAnalize);
    
-   visualizeExperiment(dataset,input,sensorsToAnalize,'torque');
+   %visualizeExperiment(dataset,input,sensorsToAnalize,'torque');
     
 end
