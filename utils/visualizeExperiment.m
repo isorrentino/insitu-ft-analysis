@@ -254,20 +254,28 @@ if(~video)
 else
     init_time = 1;
     baseT=odom.getWorldLinkTransform(odom.model.getDefaultBaseLink());
+    pos = iDynTree.Position();
+    pos.fromMatlab([0;0;0.5]);
+    baseT.setPosition(pos);
     %create view vector for rotating the view on the plot figure
     % 360 is a full turn default view starts at -37.5  322.5
     nViews= round(length(dataset.qj(:,1))-init_time)/n;
     views=-37.5:720/nViews:682.5;
+    vi = VideoWriter('positions.avi');
+    open(vi);
     for i=init_time:n:length(dataset.qj(:,1))
         tic
         
-        joints = dataset.qj(i,1:dofs-3)';
+        joints = dataset.qj(i,1:dofs)';
         jointPos.fromMatlab(joints);
         %      odom.updateKinematics(jointPos);
         %     odom.init(fixedFrame,fixedFrame);
         %viz3.modelViz(0).setPositions(odom.getWorldLinkTransform(model.getDefaultBaseLink()),jointPos);
         viz3.modelViz(0).setPositions(baseT,jointPos);
-        viz3.draw();
+        viz3.draw();        
+        viz3.drawToFile('iCubPosition.png');
+        videoImage=imread('iCubPosition.png');
+        writeVideo(vi,videoImage);
         t = toc;
         if useTorque
             dataToPlot=4:6;
@@ -312,11 +320,12 @@ else
     
     %make the video of the plot.
     v = VideoWriter('forces.avi');
-    open(v);
+    open(v);    
     for k = init_time:n:length(dataset.qj(:,1))
-        writeVideo(v,F(k));
+        writeVideo(v,F(k));        
     end
     close(v);
+    close(vi);
 end
 
 if testDir
