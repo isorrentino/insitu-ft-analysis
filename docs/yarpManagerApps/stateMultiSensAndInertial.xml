@@ -88,7 +88,7 @@
 		<tag>data-dumpericub-left_arm-analog-o</tag>
 	</module>
 	<connection>
-		<from>/icub/left_arm/measures:o</from>
+		<from>/icub/left_arm/analog:o</from>
 		<to>/dumper/icub/left_arm/analog</to>
 		<protocol>udp</protocol>
 	</connection>
