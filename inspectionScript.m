@@ -9,7 +9,9 @@ addpath utils
 addpath external/quadfit
 
 %experimentName='dataSamples/First_Time_Sensor';%
- experimentName='green-iCub-Insitu-Datasets/2018_07_10_Grid';
+%  experimentName='green-iCub-Insitu-Datasets/2018_07_10_Grid';
+
+ experimentName='green-iCub-Insitu-Datasets/2018_12_11/Grid_4';
 
 %     experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_3';
 %experimentName='green-iCub-Insitu-Datasets/heatonrightankle';
@@ -32,8 +34,8 @@ compareTemperature=false;
 % grid
 % tz
 % random
-% contactSwitching
-% standUp
+% contactSwitchingleftyoga
+% standUpleftyogaleftyogaleftyogaleftyogaleftyoga
 % walking
 type='right_leg_yoga';
 %% set references
@@ -58,7 +60,7 @@ refNames=fieldnames(referenceExp);
 
 %% Read data
 scriptOptions = {};
-scriptOptions.forceCalculation=true;%false;
+scriptOptions.forceCalculation=false;%false;
 if(checkSaturation)
     scriptOptions.raw=true;
 end
@@ -68,7 +70,7 @@ scriptOptions.filterData=true;
 if(strcmp(type,'random'))
     scriptOptions.estimateWrenches=false;
 else
-    scriptOptions.estimateWrenches=false;
+    scriptOptions.estimateWrenches=true;
 end
 scriptOptions.multiSens=true;
 scriptOptions.useInertial=false;
@@ -80,13 +82,13 @@ if any(input.type)
    type=input.type; 
 end
 names=fieldnames(dataset.ftData);
-sensorsToAnalize={'right_foot'};
+sensorsToAnalize={'left_leg'};
 %%
 if(checkSaturation)
     for ftIdx =1:length(sensorsToAnalize)
         ft = sensorsToAnalize{ftIdx};
         if (any(strcmp(ft, refNames)) && strcmp(type,'grid'))
-            [reference,estimator,input,extraSample]=readExperiment (referenceExp.(ft),refOptions);
+            [reference,~,input,extraSample]=readExperiment (referenceExp.(ft),refOptions);
             FTplots(dataset.rawData,dataset.time,reference.ftData,'raw','referenceRaw',reference.time)
         else
             FTplots(dataset.rawData,dataset.time,'raw')
@@ -96,7 +98,7 @@ end
 %%
 if(Force3Dspace)
     %% TODO consider to test if the reference type exist and what to do in case it dont
-    [reference,estimator,input,extraSample]=readExperiment (referenceExp.(type),refOptions);
+    [reference,~,input,extraSample]=readExperiment (referenceExp.(type),refOptions);
     for ftIdx =1:length(sensorsToAnalize)
         ft = sensorsToAnalize{ftIdx};
         plotNames={'filtered','estimated'};
