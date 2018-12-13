@@ -12,52 +12,58 @@ scriptOptions.printAll=true;
 %   scriptOptions.saveDataAll=true;
 %% Select datasets with which the matrices where generated and lambda values
 %Use only datasets where the same sensor is used
-% experimentNames={   
-%     '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;    
+% experimentNames={
+%     '/green-iCub-Insitu-Datasets/2018_07_10_Grid';% Name of the experiment;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';% Name of the experiment;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     }; %this set is from iCubGenova04
-experimentNames={ %iCubGenova02 experiments
-%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
-%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
+% experimentNames={ %iCubGenova02 experiments
+% %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
+%     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+% %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
+%     };
+experimentNames={ %iCubGenova04 experiments
+    '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
+    '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
+    '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
     };
+
 names={'Workbench';
-%     'noTz';    
-     'multiple';
-%     'all';
+    'noTz';
+    'noSupp';
+    'all';
     };% except for the first one all others are short names for the expermients in experimentNames
-lambdas=[0];
-% estimationTypes=[1,4];
-% useTempBooleans=[1,4];
-%  lambdas=[
-%      0;
-% %     1;
-%      5;
-%      10;
-% %     50;
-%      100;
-%      1000;
-%      5000;
-% %     10000;
-% %     50000;
-%      100000;
-%      500000;
-% %     1000000
-% ];
-% % estimation types/
-% estimationTypes=[1,1,1,3,3,3,4,4,4];
-% useTempBooleans=[0,1,1,0,1,1,0,1,1];
-% useTempOffset  =[0,0,1,0,0,1,0,0,1];
-estimationTypes=[1];
-useTempBooleans=[0];
-useTempOffset  =[0];
+
+
+lambdas=[
+    0;
+    1;
+    5;
+    10;
+    50;
+    100;
+    1000;
+    5000;
+    10000;
+    50000;
+    100000;
+    500000;
+    1000000
+    ];
+% estimation types/
+estimationTypes=[1,1,1,3,3,3,4,4,4];
+useTempBooleans=[0,1,1,0,1,1,0,1,1];
+useTempOffset  =[0,0,1,0,0,1,0,0,1];
+% lambdas=[0];
+% estimationTypes=[1];
+% useTempBooleans=[0];
+% useTempOffset  =[0];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
     estimationNames={''};
 else
-estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans,useTempOffset);
+    estimationNames=generateEstimationTypeNames(estimationTypes,useTempBooleans,useTempOffset);
 end
 calibrationFileNames=generateCalibrationFileNames(lambdasNames,estimationNames);
 names2use=generateCalibrationFileNames(names(2:end),calibrationFileNames);
@@ -67,12 +73,12 @@ names2use=[names{1};names2use];
 % sensorsToAnalize = {'left_leg','right_leg'};  %load the new calibration matrices
 % framesToAnalize={'r_upper_leg','l_upper_leg'};
 % sensorName={'r_leg_ft_sensor','l_leg_ft_sensor','r_foot_ft_sensor','l_foot_ft_sensor'};
-sensorsToAnalize = {'right_leg'};  %load the new calibration matrices
-framesToAnalize={'r_upper_leg'};
-sensorName={'r_leg_ft_sensor'};
-% sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
-% framesToAnalize={'l_upper_leg'};
-% sensorName={'l_leg_ft_sensor'};
+% sensorsToAnalize = {'right_leg'};  %load the new calibration matrices
+% framesToAnalize={'r_upper_leg'};
+% sensorName={'r_leg_ft_sensor'};
+sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
+framesToAnalize={'l_upper_leg'};
+sensorName={'l_leg_ft_sensor'};
 
 %% Read the calibration matrices to evaluate
 
@@ -80,12 +86,12 @@ sensorName={'r_leg_ft_sensor'};
 
 % %% Select datasets in which the matrices will be evaluated
 
-% toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
-% toCompareNames={'Grid39Degree','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
+toCompare={'/green-iCub-Insitu-Datasets/2018_12_10/Grid_2','/green-iCub-Insitu-Datasets/2018_12_10/tz_2','/green-iCub-Insitu-Datasets/2018_12_10/leftyoga','/green-iCub-Insitu-Datasets/2018_12_04/leftyoga_3','/green-iCub-Insitu-Datasets/2018_12_04/rightyoga_3',};
+toCompareNames={'Grid27Degree','Tz27Degree','LeftYoga34Degree','LeftYoga38Degree','RightYoga38Degree'}; % short Name of the experiments for iCubGenova02
+reduceBy=[100,10,10,10,10]; % value used in datasampling;
+% toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
+% toCompareNames={'tz2','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
 % reduceBy=[100,10,10,10]; % value used in datasampling;
-toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
-toCompareNames={'tz2','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
-reduceBy=[100,10,10,10]; % value used in datasampling;
 % toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
 % toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
 useKnownOffset=true;
@@ -122,8 +128,8 @@ for c=1:length(toCompare)
     %iCubVizWithSlider(data.(toCompareNames{c}),robotName,sensorsToAnalize,input.contactFrameName{1},onTestDir);
     
     %% Calculate offsets for each secondary matrix for each comparison dataset
-    sampleInit=[40,40,1040,1040];
-    sampleEnd=[60,60,1060,1060];
+    sampleInit=[40,40,1040,1040,1040];
+    sampleEnd=[60,60,1060,1060,1060];
     if length(toCompareNames)~=length(sampleInit) || length(toCompareNames)~=length(sampleEnd)
         error('testSecondaryMatrices: begining and end of the samples in which the offset will be calculated should be provided for all data sets to compare');
         
@@ -141,7 +147,7 @@ for c=1:length(toCompare)
                 if(isempty(sIndx)) || isempty(offsets.(names2use{i}).(sensorFieldNames{sensor})) % TODO: probably the sIndx condition will be removed
                     offsetToUse.(sensorFieldNames{sensor})=calculatedOffset.(sensorFieldNames{sensor});
                 else
-                     offsetToUse.(sensorFieldNames{sensor})=offsets.(names2use{i}).(sensorFieldNames{sensor});
+                    offsetToUse.(sensorFieldNames{sensor})=offsets.(names2use{i}).(sensorFieldNames{sensor});
                 end
             end
         else
@@ -154,7 +160,7 @@ for c=1:length(toCompare)
     [data.(toCompareNames{c}).ftData,mask]=filterFtData(data.(toCompareNames{c}).ftData);
     data.(toCompareNames{c})=applyMask(data.(toCompareNames{c}),mask);
     % subsample dataset to speed up computations
-    [data.(toCompareNames{c}),~]= dataSampling(data.(toCompareNames{c}),reduceBy(c));    
+    [data.(toCompareNames{c}),~]= dataSampling(data.(toCompareNames{c}),reduceBy(c));
     
     %% Comparison
     framesNames={'l_sole','r_sole','l_upper_leg','r_upper_leg','root_link','l_elbow_1','r_elbow_1',}; %there has to be atleast 6
@@ -171,7 +177,7 @@ for c=1:length(toCompare)
                 [results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForces,...
                     results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).eForcesTime,~,...
                     results.(toCompareNames{c}).(sensorsToAnalize{j}).(names2use{i}).externalForcesAtSensorFrame]=...
-                    estimateExternalForces... 
+                    estimateExternalForces...
                     (input.robotName,data.(toCompareNames{c}),sMat,input.sensorNames,...
                     input.contactFrameName,timeFrame,framesNames,offset.(toCompareNames{c}).(names2use{i}),...
                     'sensorsToAnalize',sensorsToAnalize(j));
@@ -205,31 +211,31 @@ for c=1:length(toCompare)
     
 end
 %% Save external forces
- for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 sensors in the same leg
-extForceResults.results.(sensorsToAnalize{j})=stackedResults.(sensorsToAnalize{j});
-extForceResults.lambdas=lambdas;
-extForceResults.estimationTypes=estimationTypes;
-extForceResults.useTempBooleans=useTempBooleans;
-extForceResults.useTempOffset=useTempOffset;
-extForceResults.names.names2use=names2use;
-extForceResults.names.toCompare=toCompareNames;
-extForceResults.names.experimentNames=names;
-extForceResults.toCompare=toCompare;
-extForceResults.experimentNames=experimentNames;
-extForceResults.cMat=cMat;
-if strfind(pwd,'testResults')>0  
-    prefix='../';
-else
-    prefix='';
+for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 sensors in the same leg
+    extForceResults.results.(sensorsToAnalize{j})=stackedResults.(sensorsToAnalize{j});
+    extForceResults.lambdas=lambdas;
+    extForceResults.estimationTypes=estimationTypes;
+    extForceResults.useTempBooleans=useTempBooleans;
+    extForceResults.useTempOffset=useTempOffset;
+    extForceResults.names.names2use=names2use;
+    extForceResults.names.toCompare=toCompareNames;
+    extForceResults.names.experimentNames=names;
+    extForceResults.toCompare=toCompare;
+    extForceResults.experimentNames=experimentNames;
+    extForceResults.cMat=cMat;
+    if strfind(pwd,'testResults')>0
+        prefix='../';
+    else
+        prefix='';
+        
+    end
+    if ~exist(strcat(prefix,'data/generalResults'),'dir')
+        mkdir(strcat(prefix,'data/generalResults'));
+        
+    end
     
+    save(strcat(prefix,'data/generalResults/extForceResults_',date,'_',input.robotName,'_',(sensorsToAnalize{j}),'.mat'),'extForceResults')
+    clear extForceResults;
 end
-if ~exist(strcat(prefix,'data/generalResults'),'dir')
-    mkdir(strcat(prefix,'data/generalResults'));
-    
-end
-
-save(strcat(prefix,'data/generalResults/extForceResults_',date,'_',input.robotName,'_',(sensorsToAnalize{j}),'.mat'),'extForceResults')
-clear extForceResults;
- end
 %% Evaluate error
 run('evaluateSecondaryMatrixError');
