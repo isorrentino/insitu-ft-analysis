@@ -186,12 +186,12 @@ for i=1:dofs %-4 ensures avoiding the 3 last neck joints
  
     consideredJoints.push_back( (dataset.jointNames{i}));
 end
-for i=1:length(input.sensorNames)
-    consideredJoints.push_back( (input.sensorNames{i}));    
+for i=1:length(sensorNames)
+    consideredJoints.push_back( (sensorNames{i}));    
 end
 
 estimatorLoader = iDynTree.ModelLoader();
-estimatorLoader.loadReducedModelFromFile(strcat('./robots/',input.robotName,'.urdf'),consideredJoints);
+estimatorLoader.loadReducedModelFromFile(strcat('./robots/',robotName,'.urdf'),consideredJoints);
 estimator.setModelAndSensors(estimatorLoader.model(),estimatorLoader.sensors);
 
 % Create KinDynComputations class variable
