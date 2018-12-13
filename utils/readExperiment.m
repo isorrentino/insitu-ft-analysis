@@ -180,9 +180,20 @@ else
                     ftData.(input.ftNames{i})=sensors.ft.measures;
                     [uniqueValues,uniqueIndex]=unique(sensors.temperature.measures(:,1));
                 else
+                    % Check for possible saturations
+                    [uniqueFTValues,uniqueFTIndex]=unique(sensors_temp.ft.time);
+                    if length(uniqueFTValues)<length(sensors_temp.ft.time)
+                        saturationsAmount=length(sensors_temp.ft.time)-length(uniqueFTValues);
+                        warning('Possible %d saturations check data ',saturationsAmount)
+                    ftData.(input.ftNames{i})=resampleFt(time,sensors_temp.ft.time(uniqueFTIndex),sensors_temp.ft.measures(uniqueFTIndex,:));
+                     fprintf('readExperiment: Resampling the FT data ignoring possible saturations for the part %s\n',input.ftNames{i});
+                   
+                    else
+                        
                     %resample FT data
                     ftData.(input.ftNames{i})=resampleFt(time,sensors_temp.ft.time,sensors_temp.ft.measures);
                     fprintf('readExperiment: Resampling the FT data for the part %s\n',input.ftNames{i});
+                    end
                 end
                 [uniqueValues,uniqueIndex]=unique(sensors_temp.temperature.measures(:,1));
                 if ( length(uniqueValues)>1)
@@ -263,6 +274,13 @@ else
         %should match one of the names stored in the model of the robot
         % we resample joint encoders on the timestamp of the FT sensors
         fprintf('readExperiment: Resampling the state for the part %s\n',stateNames{i});
+        % Check for complete mismatch of time and forecully correct it
+        if abs(time_temp(1)-time(1))>500
+            diff=time_temp(1)-time(1);
+            time_temp=time_temp-diff;
+            warning('resampleState: difference between times exceeds 500s, assuming log should have started at the same time');
+        end
+        %
         [qj_temp,dqj_temp,ddqj_temp] = resampleState(time, time_temp, qj_temp, dqj_temp, ddqj_temp);
         tau_temp= interp1(time_temp, tau_temp  , time);
         for j=1:Dof
@@ -291,6 +309,7 @@ else
     end
     %% Estimate wrenches
     if(scriptOptions.estimateWrenches)
+        disp( 'readExperiment: Estimating reference FT data')
         [estimatedDataset,intervalMask,contactFrame]=estimateDynamicsUsingIntervals(dataset,estimator,input,scriptOptions.useInertial);
         dataset=applyMask(dataset,intervalMask);
         dataset.estimatedFtData=estimatedDataset.estimatedFtData;
