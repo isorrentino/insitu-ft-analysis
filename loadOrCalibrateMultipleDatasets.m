@@ -14,11 +14,11 @@ addpath utils
 %     '/green-iCub-Insitu-Datasets/2018_07_10_Grid_warm';% Name of the experiment;
 %     '/green-iCub-Insitu-Datasets/2018_07_10_multipleTemperatures';% Name of the experiment;
 %     };
-experimentNames={ %iCubGenova02 experiments
-   % '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
-    '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
-    %'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
-    };
+% experimentNames={ %iCubGenova02 experiments
+%    % '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_noTz';% Name of the experiment;
+%     %'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+%     %'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
+%     };
 
 % experimentNames={ %iCubGenova02 experiments
 %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_Grid';% Name of the experiment;
@@ -26,6 +26,14 @@ experimentNames={ %iCubGenova02 experiments
 % %         '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_right_yoga';% Name of the experiment;
 %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
 %     };
+
+experimentNames={ %iCubGenova04 experiments
+    '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
+     '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
+      '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
+  
+     };
+
 % read experiment options
 readOptions = struct();
 readOptions.forceCalculation=false;%false;
@@ -35,33 +43,33 @@ readOptions.multiSens=true;
 readOptions.matFileName='ftDataset'; % name of the mat file used for save the experiment data
 
 readOptions.visualizeExp=false;
-readOptions.printPlots=true;%true
+readOptions.printPlots=false;%true
 %% Calibration related variables options
 % Select sensors to calibrate the names are associated to the location of
 % the sensor in the robot
 % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-% sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
-sensorsToAnalize = {'right_leg','left_leg'};
-% lambdas=[
-%     0;
-%     1;
-%     5;
-%     10;
-%     50;
-%     100;
-%     1000;
-%     5000;
-%     10000;
-%     50000;
-%     100000;
-%     500000;
-%     1000000
-%     ];
+ sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
+%sensorsToAnalize = {'right_leg','left_leg'};
+lambdas=[
+    0;
+    1;
+    5;
+    10;
+    50;
+    100;
+    1000;
+    5000;
+    10000;
+    50000;
+    100000;
+    500000;
+    1000000
+    ];
 % estimation types/
 estimationTypes=[1,1,1,3,3,3,4,4,4];
 useTempBooleans=[0,1,1,0,1,1,0,1,1];
 useTempOffset  =[0,0,1,0,0,1,0,0,1];
-lambdas=0;
+%lambdas=0;
 % Create appropiate names for the lambda variables
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
@@ -93,6 +101,7 @@ checkMatrixOptions.secMatrixFormat=false;
 %%
 counter=1;
 for experimentIndex=1:length(experimentNames)
+    sprintf('Reading experiment %d',experimentIndex);
     [data.(strcat('e',num2str(experimentIndex))),~,input,data.(strcat('extra',num2str(experimentIndex)))]=readExperiment(experimentNames{experimentIndex},readOptions);
     
     if(calculate || evaluate)
@@ -120,7 +129,7 @@ for experimentIndex=1:length(experimentNames)
             lambda=lambdas(in);
             lambdaName=lambdasNames{in};
             for type=1:length(estimationTypes)
-                calibOptions.estimateType=estimationTypes(type);%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
+                calibOptions.estimateType=estimationTypes(type);%0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on all dataset, 4 is oneshot
                 calibOptions.useTemperature=useTempBooleans(type);                
                 calibOptions.temperatureOffset=useTempOffset(type); 
                 estimationName=estimationNames{type};
