@@ -30,34 +30,34 @@ experimentNames={ %iCubGenova04 experiments
 
 names={'Workbench';
     'noTz';
-    'noSupp';
+    'SuppOnly';
     'all';
     };% except for the first one all others are short names for the expermients in experimentNames
 
 
 lambdas=[
-    0;
-    1;
-    5;
-    10;
+%     0;
+%     1;
+%     5;
+%     10;
     50;
-    100;
-    1000;
-    5000;
-    10000;
-    50000;
-    100000;
-    500000;
-    1000000
+%     100;
+%     1000;
+%     5000;
+%     10000;
+%     50000;
+%     100000;
+%     500000;
+%     1000000
     ];
 % estimation types/
-estimationTypes=[1,1,1,3,3,3,4,4,4];
-useTempBooleans=[0,1,1,0,1,1,0,1,1];
-useTempOffset  =[0,0,1,0,0,1,0,0,1];
+% estimationTypes=[1,1,1,3,3,3,4,4,4];
+% useTempBooleans=[0,1,1,0,1,1,0,1,1];
+% useTempOffset  =[0,0,1,0,0,1,0,0,1];
 % lambdas=[0];
-% estimationTypes=[1];
-% useTempBooleans=[0];
-% useTempOffset  =[0];
+estimationTypes=[1];
+useTempBooleans=[0];
+useTempOffset  =[0];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
@@ -233,8 +233,11 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
         mkdir(strcat(prefix,'data/generalResults'));
         
     end
-    
-    save(strcat(prefix,'data/generalResults/extForceResults_',date,'_',input.robotName,'_',(sensorsToAnalize{j}),'.mat'),'extForceResults')
+    resultsFileName=strcat(prefix,'data/generalResults/extForceResults_',date,'_',input.robotName,'_',(sensorsToAnalize{j}))
+    if useKnownOffset
+       resultsFileName= strcat(resultsFileName,'_withOffset')
+    end
+    save(strcat(resultsFileName,'.mat'),'extForceResults')
     clear extForceResults;
 end
 %% Evaluate error
