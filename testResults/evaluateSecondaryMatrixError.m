@@ -1,12 +1,12 @@
 %% Evaluate error
-loadResult=false;
+loadResult=true;
 % convert from extForceResults structure to what is used here
 if exist('stackedResults','var') && ~loadResult
     names2evaluate=names2use;
     selectEstTypes=1:length(estimationNames);
-selectDataset=(2:length(names))-1;
-selectLambdas=1:length(lambdasNames);
-timeLength=length(stackedResults.(sensorsToAnalize{1}).(names2evaluate{1}).eForcesTime);
+    selectDataset=(2:length(names))-1;
+    selectLambdas=1:length(lambdasNames);
+    timeLength=length(stackedResults.(sensorsToAnalize{1}).(names2evaluate{1}).eForcesTime);
     selectTimeSamples=1:timeLength;
 else
     if ~exist ('extForceResults','var') % select result file
@@ -22,26 +22,31 @@ else
     lambdasNames=generateLambdaNames(extForceResults.lambdas);
     estimationNames=generateEstimationTypeNames(extForceResults.estimationTypes,extForceResults.useTempBooleans,extForceResults.useTempOffset);
     names=extForceResults.names.experimentNames;
-    sensorsToAnalize={'right_leg'};%fieldnames(extForceResults.results); % this bring all sensors that were estimated not neccesarily the ones to analize
-    sensorName={'r_leg_ft_sensor'};
-    framesToAnalize={'r_upper_leg'};%fieldnames(extForceResults.results.(sensorsToAnalize{1}).(names2use{1}).externalForcesAtSensorFrame);
+%     sensorsToAnalize = {'right_leg'};  %load the new calibration matrices
+%     framesToAnalize={'r_upper_leg'};
+%     sensorName={'r_leg_ft_sensor'};
+         sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
+    framesToAnalize={'l_upper_leg'};
+    sensorName={'l_leg_ft_sensor'};
     
     % create selector matrix
     orderArrangement=[1 3 2];
     namesMatrix=reshape(names2use(2:end),length(estimationNames),length(lambdasNames),length(names)-1);
     namesMatrix=permute(namesMatrix,orderArrangement); % this makes so that the lambdas are in the last dimension.
     % select conditions of the evaluation
-    selectEstTypes=1:2:length(estimationNames);
+    selectEstTypes=1:length(estimationNames);
     selectDataset=(2:length(names))-1;
     selectLambdas=1:length(lambdasNames);
     timeLength=length(stackedResults.(sensorsToAnalize{1}).Workbench.eForcesTime);
-    selectTimeSamples=[1:20:3000,3001:timeLength];
+    %selectTimeSamples=[1:20:3000,3001:timeLength];
+    selectTimeSamples=[1:timeLength];
+    
     % create names based on selected values
     names2check=namesMatrix(selectEstTypes,selectDataset,selectLambdas);
     names2evaluate=names2check(:); %typically
     names2evaluate=[names2use(1);names2evaluate];
     %% clear variables
-    clear error errorXaxis strd strd_axis
+    clear error errorXaxis strd strd_axisN
 end
 useMean=true; %select which means of evaluation should be considered is either mean or standard deviation.
 plotResults=true;
@@ -84,13 +89,13 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
             xmlStr.(sensorName{j})=cMat2xml(sCalibMat.(sensorsToAnalize{j}),sensorName{j});% print in required format to use by WholeBodyDynamics
             
             axisName={'fx','fy','fz','tx','ty','tz'};
-            for axis=1:6
+            for axisN=1:6
                 if useMean
-                    totalerrorXaxis=errorXaxis.(sensorsToAnalize{j}).(framesToAnalize{frN})(:,:,axis);
+                    totalerrorXaxis=errorXaxis.(sensorsToAnalize{j}).(framesToAnalize{frN})(:,:,axisN);
                     fprintf('Matrix with least external force on %s sensor evaluted on %s frame',(sensorsToAnalize{j}),(framesToAnalize{frN}));
                     
                 else
-                    totalerrorXaxis=strd_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(:,:,axis);
+                    totalerrorXaxis=strd_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(:,:,axisN);
                     fprintf('Matrix with least variation on %s sensor evaluted on %s frame',(sensorsToAnalize{j}),(framesToAnalize{frN}));
                     
                 end
@@ -98,13 +103,13 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
                 % axis
                 [minErr,minInd]=min(totalerrorXaxis);
                 if useMean
-                    fprintf(' in %s is from %s , with a total of %.5f N or Nm on average \n',axisName{axis},names2evaluate{minInd}, minErr);
+                    fprintf(' in %s is from %s , with a total of %.5f N or Nm on average \n',axisName{axisN},names2evaluate{minInd}, minErr);
                 else
-                    fprintf(' in %s is from %s , with a total of %.5f std \n',axisName{axis},names2evaluate{minInd}, minErr);
+                    fprintf(' in %s is from %s , with a total of %.5f std \n',axisName{axisN},names2evaluate{minInd}, minErr);
                 end
                 
-                frankieMatrix.(sensorsToAnalize{j})(axis,:)=cMat.(names2evaluate{minInd}).(sensorsToAnalize{j})(axis,:);
-                frankieData.(framesToAnalize{frN})(:,axis)=stackedResults.(sensorsToAnalize{j}).(names2evaluate{minInd}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(:,axis);
+                frankieMatrix.(sensorsToAnalize{j})(axisN,:)=cMat.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
+                frankieData.(framesToAnalize{frN})(:,axisN)=stackedResults.(sensorsToAnalize{j}).(names2evaluate{minInd}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(:,axisN);
             end
             fCalibMat.(sensorsToAnalize{j})=frankieMatrix.(sensorsToAnalize{j})/(WorkbenchMat.(sensorsToAnalize{j}));%calculate secondary calibration matrix
             xmlStrFrankie.(sensorName{j})=cMat2xml(fCalibMat.(sensorsToAnalize{j}),sensorName{j});% print in required format to use by WholeBodyDynamics
@@ -124,19 +129,21 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
                 extForceToPlot=[extForceToPlot;wkbenchErr];
                 xBarNames{length(xBarNames)+1}='Workbench';
                 figure,
-                b=bar3(extForceToPlot);
+                b=bar3(extForceToPlot);                
+                set(gca,'YTick',1:length(xBarNames));
                 set(gca,'YTickLabel',escapeUnderscores(   xBarNames));
                 set(gca,'XTickLabel',lambdas');
                 ylabel('Dataset+estimationType')
                 xlabel('\lambda')
                 zlabel('External Force (N)')
-                title(strcat('Second Validation Procedure Results ',(sensorsToAnalize{j})))
+                title(strcat('Second Validation Procedure Results ',escapeUnderscores((sensorsToAnalize{j}))))
                 colorbar
                 for k = 1:length(b)
                     zdata = b(k).ZData;
                     b(k).CData = zdata;
                     b(k).FaceColor = 'interp';
                 end
+                axis tight;
             end
             
             
