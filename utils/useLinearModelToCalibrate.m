@@ -17,7 +17,7 @@ extraSamplesAvailable=false;
 withRegularization=true;
 withTemperature=false;
 temperatureOffset=false;
-estimationType=1; %0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on main dataset, 4 is oneshot
+estimationType=1; %0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on all dataset, 4 is oneshot
 narin=0;
 cMat=[];
 lambda=0;
@@ -224,6 +224,9 @@ for ftIdx =1:length(sensorsToAnalize)
             [calibrationRequired,stackedExpectedWrench,stackedRawtoUse, stackedTemperature]= stackLogic(dataset,ft,extraSample,fieldsToStack);
             if calibrationRequired %% insert temperature  in format for calibration
                 varInput{temperatureDataIndex}= stackedTemperature-tempOffset;
+                tempToUse=varInput{temperatureDataIndex};
+            else
+                tempToUse=temperature.(ft)-tempOffset;
             end
         else
             [calibrationRequired,stackedExpectedWrench,stackedRawtoUse]= stackLogic(dataset,ft,extraSample,fieldsToStack);
@@ -259,7 +262,7 @@ for ftIdx =1:length(sensorsToAnalize)
                 end
                 [calibMatrices.(ft),fullscale.(ft),~,tempCoeff]=estimateCalibrationMatrix(rawToUse,expectedWrench,varInput{:});
                 if sum(tempCoeff)~=0
-                    offsetInForce=meanEst'-(calibMatrices.(ft)*meanFt'+ tempCoeff*mean(temperature.(ft)-tempOffset));
+                    offsetInForce=meanEst'-(calibMatrices.(ft)*meanFt'+ tempCoeff*mean(tempToUse));
                 else
                     offsetInForce=meanEst'-calibMatrices.(ft)*meanFt';
                 end
