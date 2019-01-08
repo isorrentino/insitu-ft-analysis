@@ -55,7 +55,7 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
         
         
         for i=1:length(names2evaluate)
-            error.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=norm(mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3))));
+            error.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=mean(normOfRows(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3)));
             errorXaxis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:)));
             strd.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=mean(std(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3)));
             strd_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=std(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:));
