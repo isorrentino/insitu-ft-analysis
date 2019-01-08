@@ -76,14 +76,14 @@ for v=1:2:length(varargin)
                     end
                 end
             case {'offsetIsInRawSpace','OffsetIsRaw','offsetisraw','OFFSETISRAW','rawOffset','isRawOffset'}
-                if islogical(tempV)
-                    isRawOffset=tempV;
+                if islogical(varargin{v+1})
+                    isRawOffset=(varargin{v+1});
                 else
                     warning('checkNewMatrixPerformance: expected a boolean variable for option OffsetIsRaw, ignoring');
                 end
             case {'plotMeasureVsEstimate','plotMvsE','MeasureVSestimate','plotmvse'}
-                if islogical(tempV)
-                    plotMeasureVsEstimate=tempV;
+                if islogical(varargin{v+1})
+                    plotMeasureVsEstimate=(varargin{v+1});
                 else
                     warning('checkNewMatrixPerformance: expected a boolean variable for option plot Measure VS Estimate, ignoring');
                 end

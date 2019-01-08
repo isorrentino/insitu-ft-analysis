@@ -48,22 +48,22 @@ readOptions.printPlots=false;%true
 % Select sensors to calibrate the names are associated to the location of
 % the sensor in the robot
 % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
- sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
-%sensorsToAnalize = {'right_leg','left_leg'};
+% sensorsToAnalize = {'right_leg','left_leg','right_foot','left_foot'};
+sensorsToAnalize = {'right_leg','left_leg'};
 lambdas=[
     0;
-    1;
-    5;
-    10;
-    50;
-    100;
-    1000;
-    5000;
-    10000;
-    50000;
-    100000;
-    500000;
-    1000000
+%     1;
+%     5;
+%     10;
+%     50;
+%     100;
+%     1000;
+%     5000;
+%     10000;
+%     50000;
+%     100000;
+%     500000;
+%     1000000
     ];
 % estimation types/
 estimationTypes=[1,1,1,3,3,3,4,4,4];
@@ -236,6 +236,10 @@ if (evaluate)
         
         %     allResults.MSEvalues=MSEvalues;
         %     allResults.offsetValues=offsetValues;
+        allResults.estimationTypes=estimationTypes;
+        allResults.useTempBooleans=useTempBooleans;
+        allResults.useTempOffset  =useTempOffset;
+        allResults.lambdas=lambdas;
         allResults.experimentNames=experimentNames;
         allResults.calibrationMatrices=calibrationMatrices;
         allResults. temperatureCoeffs= temperatureCoeffs;
