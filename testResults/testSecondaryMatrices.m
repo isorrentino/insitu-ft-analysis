@@ -36,28 +36,28 @@ names={'Workbench';
 
 
 lambdas=[
-%     0;
-%     1;
-%     5;
-%     10;
+    0;
+    1;
+    5;
+    10;
     50;
-%     100;
-%     1000;
-%     5000;
-%     10000;
-%     50000;
-%     100000;
-%     500000;
-%     1000000
+    100;
+    1000;
+    5000;
+    10000;
+    50000;
+    100000;
+    500000;
+    1000000
     ];
 % estimation types/
-% estimationTypes=[1,1,1,3,3,3,4,4,4];
-% useTempBooleans=[0,1,1,0,1,1,0,1,1];
-% useTempOffset  =[0,0,1,0,0,1,0,0,1];
+estimationTypes=[1,1,1,3,3,3,4,4,4];
+useTempBooleans=[0,1,1,0,1,1,0,1,1];
+useTempOffset  =[0,0,1,0,0,1,0,0,1];
 % lambdas=[0];
-estimationTypes=[1];
-useTempBooleans=[0];
-useTempOffset  =[0];
+% estimationTypes=[1];
+% useTempBooleans=[0];
+% useTempOffset  =[0];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
@@ -89,19 +89,26 @@ sensorName={'l_leg_ft_sensor'};
 toCompare={'/green-iCub-Insitu-Datasets/2018_12_10/Grid_2','/green-iCub-Insitu-Datasets/2018_12_10/tz_2','/green-iCub-Insitu-Datasets/2018_12_10/leftyoga','/green-iCub-Insitu-Datasets/2018_12_04/leftyoga_3','/green-iCub-Insitu-Datasets/2018_12_04/rightyoga_3',};
 toCompareNames={'Grid27Degree','Tz27Degree','LeftYoga34Degree','LeftYoga38Degree','RightYoga38Degree'}; % short Name of the experiments for iCubGenova02
 reduceBy=[100,10,10,10,10]; % value used in datasampling;
+useKnownOffset=true;
+% offset times for each comparison dataset
+sampleInit=[40,40,1040,1040,1040];
+sampleEnd=[60,60,1060,1060,1060];
+if length(toCompareNames)~=length(sampleInit) || length(toCompareNames)~=length(sampleEnd)
+    error('testSecondaryMatrices: begining and end of the samples in which the offset will be calculated should be provided for all data sets to compare');
+    
+end
 % toCompare={'/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_tz_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_left_yoga_2','/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_2'};
 % toCompareNames={'tz2','Tz39Degree','LeftYoga39Degree','RightYoga39Degree'}; % short Name of the experiments for iCubGenova02
 % reduceBy=[100,10,10,10]; % value used in datasampling;
 % toCompare={'green-iCub-Insitu-Datasets/yoga in loop','green-iCub-Insitu-Datasets/yoga left cold session'};
 % toCompareNames={'yogaLoog','yogaLeftCold'}; % short Name of the experiments
-useKnownOffset=true;
+
 compareDatasetOptions = {};
 compareDatasetOptions.forceCalculation=false;%false;
 compareDatasetOptions.saveData=true;%true
 compareDatasetOptions.matFileName='iCubDataset';
 compareDatasetOptions.testDir=true;
 compareDatasetOptions.raw=false;
-%compareDatasetOptions.testDir=true;% to calculate the raw data, for recalibration always true
 compareDatasetOptions.filterData=false;
 compareDatasetOptions.estimateWrenches=true;
 compareDatasetOptions.useInertial=false;
@@ -121,20 +128,11 @@ for c=1:length(toCompare)
     %matrix considering all evaluated datasets.
     
     %% Calculate offset with a previously selected configuration of the robot during the experment
-    %offsetContactFrame={'r_sole','l_sole'}; %'l_sole' 'root_link'
     %inspect data to select where to calculate offset
-    robotName=input.robotName;
-    onTestDir=true;
-    %iCubVizWithSlider(data.(toCompareNames{c}),robotName,sensorsToAnalize,input.contactFrameName{1},onTestDir);
+    %iCubVizWithSlider(data.(toCompareNames{c}),input.robotName;,sensorsToAnalize,input.contactFrameName{1},compareDatasetOptions.testDir);
     
     %% Calculate offsets for each secondary matrix for each comparison dataset
-    sampleInit=[40,40,1040,1040,1040];
-    sampleEnd=[60,60,1060,1060,1060];
-    if length(toCompareNames)~=length(sampleInit) || length(toCompareNames)~=length(sampleEnd)
-        error('testSecondaryMatrices: begining and end of the samples in which the offset will be calculated should be provided for all data sets to compare');
-        
-    end
-    % compute offset or store known offset
+     % compute offset or store known offset
     % workbench does not currently have a known offset
     offset.(toCompareNames{c}).(names2use{1})=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{1}));
     % for all other matrices
