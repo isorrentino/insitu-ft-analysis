@@ -43,7 +43,7 @@ end
                     colorsUsed(l,:)=newLines(l).Color;
                 end
                 uniqueColors=unique(colorsUsed,'rows');
-                if length(uniqueColors)<length(newLines) %some colors are repeated
+                if size(uniqueColors,1)<length(newLines) %some colors are repeated
                     colorOrder=selectColors(length(newLines));
                     count=1;
                     for l=length(newLines):-1:1
