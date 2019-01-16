@@ -301,7 +301,7 @@ if (byChannel)
                 title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),{' and  '},escapeUnderscores(strcat(referenceName,{' '},(rfields{i})))));
             else
                 legend((legendNames{n}));
-                title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),(legendNames{n})));
+                title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i}))));
             end           
             legendmarkeradjust(20);
             xlabel(xAxisOption);
