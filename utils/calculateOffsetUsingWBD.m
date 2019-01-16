@@ -14,15 +14,35 @@ function [offset]=calculateOffsetUsingWBD(estimator,dataset,sampleInit,sampleEnd
 % assuming contact doesnt change%
 secMat=NaN;
 sensorsToAnalize={};
+tempCoefficients=zeros(6,1);
+tempOffset=0;
 if (length(varargin)==1)
     if (isstruct(varargin{1}))
         secMat= varargin{1};
         sensorsToAnalize=fieldnames(secMat);
     end
 end
+
+if (mod(length(varargin),2)==0)
+    for v=1:2:length(varargin)
+        switch  varargin{v}
+            case {'secondaryMatrix','secMat','sMat'}
+                secMat= varargin{v+1};
+                sensorsToAnalize=fieldnames(secMat);
+            case {'temperatureCoefficients','tempCoefficients','tempCoeff'}
+                TempCoefficients= varargin{v+1};
+            case {'temperatureOffset','tempOffset','tempOff'}
+                TempOffset= varargin{v+1};
+        end
+    end
+end
 sensorNames=fieldnames(dataset.ftData);
 for n=1:length(sensorNames)
     offset.(sensorNames{n})=[0;0;0;0;0;0];
+end
+tempAvailable=true;
+if any(strcmp('temperature',fieldnames(dataset)))
+    tempAvailable=true;
 end
 
 if any(strcmp('estimatedFtData',fieldnames(dataset)))
@@ -33,15 +53,25 @@ if any(strcmp('estimatedFtData',fieldnames(dataset)))
     dataset=applyMask(dataset,mask);
     for sensor=1:length(sensorNames)
         sIndx= find(strcmp(sensorsToAnalize,sensorNames(sensor)));
-            if(isempty(sIndx))
-                offset.(sensorNames{sensor})=mean(dataset.estimatedFtData.(sensorNames{sensor})-dataset.ftData.(sensorNames{sensor}))';
-            else
+        if(isempty(sIndx))
+            offset.(sensorNames{sensor})=mean(dataset.estimatedFtData.(sensorNames{sensor})-dataset.ftData.(sensorNames{sensor}))';
+        else
+            if ~tempAvailable
                 recalibData=(secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sensorNames{sensor})')';
-                offset.(sensorNames{sensor})=mean(dataset.estimatedFtData.(sensorNames{sensor})-recalibData)';
+            else
+                if exist('TempCoefficients','var')
+                    tempCoefficients=TempCoefficients.(sensorNames{sensor});
+                end
+                if exist('TempOffset','var')
+                    tempOffset=TempOffset.(sensorNames{sensor});
+                end
+                recalibData=(secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sensorNames{sensor})')'+(tempCoefficients*(dataset.temperature.(sensorNames{sensor})-tempOffset)')';
             end
+            offset.(sensorNames{sensor})=mean(dataset.estimatedFtData.(sensorNames{sensor})-recalibData)';
+        end
     end
 else
-    %% Prerpare joint variables    
+    %% Prerpare joint variables
     dofs = estimator.model().getNrOfDOFs();
     grav_idyn = iDynTree.Vector3();
     grav = [0.0;0.0;-9.81];
@@ -54,7 +84,7 @@ else
     
     qj_idyn   = iDynTree.JointPosDoubleArray(dofs);
     dqj_idyn  = iDynTree.JointDOFsDoubleArray(dofs);
-    ddqj_idyn = iDynTree.JointDOFsDoubleArray(dofs);    
+    ddqj_idyn = iDynTree.JointDOFsDoubleArray(dofs);
     
     %% Prepare estimator variables
     %store number of sensors
@@ -147,7 +177,21 @@ else
             if(isempty(sIndx))
                 offset.(sensorNames{n})=((count-1)/count)*offset.(sensorNames{n}) + (1/count)*(estimatedFT.(sensorNames{n})-dataset.ftData.(sensorNames{n})(sample,:))';
             else
-                recalibData=(secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sensorNames{n})(sample,:)')';
+                %                 recalibData=(secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sensorNames{n})(sample,:)')';
+                
+                if ~tempAvailable
+                    recalibData=(secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sensorNames{n})(sample,:)')';
+                else
+                    if exist('TempCoefficients','var')
+                        tempCoefficients=TempCoefficients.(sensorNames{n});
+                    end
+                    if exist('TempOffset','var')
+                        tempOffset=TempOffset.(sensorNames{n});
+                    end
+                    recalibData=(secMat.(sensorsToAnalize{sIndx})*dataset.ftData.(sensorNames{n})(sample,:)')'+(tempCoefficients*(dataset.temperature.(sensorNames{n})(sample,:)-tempOffset)')';
+                end
+                
+                
                 offset.(sensorNames{n})=((count-1)/count)*offset.(sensorNames{n}) + (1/count)*(estimatedFT.(sensorNames{n})-recalibData)';
                 %              if sum(abs(offset.(sensorNames{n}))>300 )
                 %                      sprintf('offset exceeded 300N is now  %d for sensor %s at sample %d', offset.(sensorNames{n}),(sensorNames{n}),sample)

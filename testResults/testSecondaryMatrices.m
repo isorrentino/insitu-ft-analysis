@@ -23,41 +23,41 @@ scriptOptions.printAll=true;
 % %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
 %     };
 experimentNames={ %iCubGenova04 experiments
-    '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
+%     '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
     '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
-    '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
+%     '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
     };
 
 names={'Workbench';
-    'noTz';
+%     'noTz';
     'SuppOnly';
-    'all';
+%     'all';
     };% except for the first one all others are short names for the expermients in experimentNames
 
 
-lambdas=[
-    0;
-    1;
-    5;
-    10;
-    50;
-    100;
-    1000;
-    5000;
-    10000;
-    50000;
-    100000;
-    500000;
-    1000000
-    ];
+% lambdas=[
+%     0;
+%     1;
+%     5;
+%     10;
+%     50;
+%     100;
+%     1000;
+%     5000;
+%     10000;
+%     50000;
+%     100000;
+%     500000;
+%     1000000
+%     ];
 % estimation types/
-estimationTypes=[1,1,1,3,3,3,4,4,4];
-useTempBooleans=[0,1,1,0,1,1,0,1,1];
-useTempOffset  =[0,0,1,0,0,1,0,0,1];
-% lambdas=[0];
-% estimationTypes=[1];
-% useTempBooleans=[0];
-% useTempOffset  =[0];
+% estimationTypes=[1,1,1,3,3,3,4,4,4];
+% useTempBooleans=[0,1,1,0,1,1,0,1,1];
+% useTempOffset  =[0,0,1,0,0,1,0,0,1];
+lambdas=[100];
+estimationTypes=[3,3];
+useTempBooleans=[1,1];
+useTempOffset  =[0,1];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
@@ -137,7 +137,7 @@ for c=1:length(toCompare)
     offset.(toCompareNames{c}).(names2use{1})=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{1}));
     % for all other matrices
     for i=2:length(names2use)
-        calculatedOffset=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{i}));
+        calculatedOffset=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,'secMat',secMat.(names2use{i}),'tempCoeff',extraCoeff.(names2use{i}),'tempOffset',extraCoeffOffset.(names2use{i}));
         if useKnownOffset
             sensorFieldNames=fieldnames(calculatedOffset);
             for sensor=1:length(sensorFieldNames)
