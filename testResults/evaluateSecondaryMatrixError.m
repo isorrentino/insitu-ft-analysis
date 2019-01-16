@@ -48,7 +48,7 @@ else
     %% clear variables
     clear error errorXaxis strd strd_axisN
 end
-useMean=false; %select which means of evaluation should be considered is either mean or standard deviation.
+useMean=true; %select which means of evaluation should be considered is either mean or standard deviation.
 plotResults=true;
 for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 sensors in the same leg
     for frN=1:length(framesToAnalize)
@@ -59,6 +59,21 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
             errorXaxis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=mean(abs(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:)));
             strd.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=mean(std(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3)));
             strd_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=std(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:));
+%             % testing r_squared metric
+% %             r_squared=1-(sum((y-predicted_y)^2)/(sum((y-avg_y)^2)=1-MSE/VAR;
+% %             in our case predicted_y =0
+% %             for the magnitudes
+%             y=normOfRows(stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,1:3));
+%             MSE=sum(y.^2);
+%             VAR=sum((y-mean(y)).^2);
+%             r_squared.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i)=1-(MSE/VAR);
+% %             for axis
+%             y_axis=stackedResults.(sensorsToAnalize{j}).(names2evaluate{i}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(selectTimeSamples,:);
+%             MSE_axis=sum(y_axis.^2);
+%             VAR_axis=sum((y_axis-mean(y_axis)).^2);
+%             r_squared_axis.(sensorsToAnalize{j}).(framesToAnalize{frN})(1,i,:)=1-(MSE_axis./VAR_axis);           
+%             
+%             %
             % we probably want the mean of the standard deviations of the
             % forces during experiment. the lower the variability the
             % better
@@ -166,8 +181,15 @@ if plotResults
 %     FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best General','byChannel');
 %     FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis','byChannel');
     
-    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best General','byChannel','USESAMPLES');
-    FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis','byChannel','USESAMPLES');
+%     FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime, newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best General','byChannel','USESAMPLES');
+%     FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis','byChannel','USESAMPLES');
+%      FTplots(newData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'Best axis','byChannel','USESAMPLES');
+   
+h1= FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,'byChannel','USESAMPLES');
+h2= FTplots(newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'byChannel','USESAMPLES');
+h3= FTplots(frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'byChannel','USESAMPLES');
+mergeFTplots(h2,h3)
+mergeFTplots(h1,h2)
     % 3D plot
     
     
