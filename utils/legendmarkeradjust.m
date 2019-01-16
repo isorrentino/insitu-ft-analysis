@@ -1,5 +1,5 @@
 function legendmarkeradjust(varargin)
-if ishandle(varargin{1})
+if ishandle(varargin{1}) && ~isnumeric(varargin{1})
     h=varargin{1};
     varargin={varargin{2:end}};
 else
