@@ -1,4 +1,4 @@
-function []=FTplots(data,time,varargin)
+function [H]=FTplots(data,time,varargin)
 % This function plots the information received from an FT sensor be it the wrenches or the raw data.
 % It assumes wrenches are in a double matrix (time x wrench), wrench [F,T]
 % The x axis is the relative time of the experiment. This means it
@@ -162,7 +162,7 @@ end
 
 if (~byChannel && isempty(reference))
     for i=1:size(fields,1)
-         figure('WindowStyle','docked'),
+         H.force=figure('WindowStyle','docked');
         plot(xAxis,data.(fields{i})(:,1),xPlotOptions{:});hold on;
         plot(xAxis,data.(fields{i})(:,2),yPlotOptions{:});hold on;
         plot(xAxis,data.(fields{i})(:,3),zPlotOptions{:});hold on;
@@ -179,7 +179,7 @@ if (~byChannel && isempty(reference))
     end
     if(~onlyForce)
         for  i=1:size(fields,1)
-             figure('WindowStyle','docked'),
+            H.torque= figure('WindowStyle','docked');
             plot(xAxis,data.(fields{i})(:,4),x2PlotOptions{:});hold on;
             plot(xAxis,data.(fields{i})(:,5),y2PlotOptions{:});hold on;
             plot(xAxis,data.(fields{i})(:,6),z2PlotOptions{:});hold on;
@@ -199,7 +199,7 @@ end
 
 if (~isempty(reference) && ~byChannel)
     for i=1:size(fields,1)
-         figure('WindowStyle','docked'),
+        H.force= figure('WindowStyle','docked');
         plot(xAxis,data.(fields{i})(:,1),xPlotOptions{:});hold on;
         plot(xAxis,data.(fields{i})(:,2),yPlotOptions{:});hold on;
         plot(xAxis,data.(fields{i})(:,3),zPlotOptions{:});hold on;
@@ -219,7 +219,7 @@ if (~isempty(reference) && ~byChannel)
     end
     if(~onlyForce)
         for  i=1:size(fields,1)
-             figure('WindowStyle','docked'),
+            H.torque= figure('WindowStyle','docked');
             plot(xAxis,data.(fields{i})(:,4),x2PlotOptions{:});hold on;
             plot(xAxis,data.(fields{i})(:,5),y2PlotOptions{:});hold on;
             plot(xAxis,data.(fields{i})(:,6),z2PlotOptions{:});hold on;
@@ -241,7 +241,7 @@ if (~isempty(reference) && ~byChannel)
     if (length(time)== length(referenceTime) && showDifference)
     if (sum(referenceTime==time)==length(time))
         for  i=1:size(fields,1)
-            figure('WindowStyle','docked'),
+            H.forceDiff=figure('WindowStyle','docked');
             plot(xAxis,abs(data.(fields{i})(:,1))-abs(reference.(rfields{i})(:,1)),xPlotOptions{:});hold on;
             plot(xAxis,abs(data.(fields{i})(:,2))-abs(reference.(rfields{i})(:,2)),yPlotOptions{:});hold on;
             plot(xAxis,abs(data.(fields{i})(:,3))-abs(reference.(rfields{i})(:,3)),zPlotOptions{:});hold on;
@@ -259,7 +259,7 @@ if (~isempty(reference) && ~byChannel)
         end
         if(~onlyForce)
             for  i=1:size(fields,1)
-                figure('WindowStyle','docked'),
+                H.torqueDiff=figure('WindowStyle','docked');
                 plot(xAxis,abs(data.(fields{i})(:,4))-abs(reference.(rfields{i})(:,4)),x2PlotOptions{:});hold on;
                 plot(xAxis,abs(data.(fields{i})(:,5))-abs(reference.(rfields{i})(:,5)),y2PlotOptions{:});hold on;
                 plot(xAxis,abs(data.(fields{i})(:,6))-abs(reference.(rfields{i})(:,6)),z2PlotOptions{:});hold on;
@@ -292,7 +292,7 @@ if (byChannel)
     end
     for i=1:size(fields,1)
         for n=1:count
-             figure('WindowStyle','docked'),
+            H.(strcat('axis',num2str(n)))= figure('WindowStyle','docked');
             plot(xAxis,data.(fields{i})(:,n),xPlotOptions{:});
             grid on;
             if ~isempty(reference)
@@ -303,7 +303,7 @@ if (byChannel)
                 legend((legendNames{n}));
                 title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),(legendNames{n})));
             end           
-            
+            legendmarkeradjust(20);
             xlabel(xAxisOption);
             if n<4
                 ylabel('N');
@@ -317,12 +317,13 @@ if (byChannel)
             if (sum(referenceTime==time)==size(time,1))
                 for i=1:size(fields,1)
                     for n=1:count
-                        figure('WindowStyle','docked'),
+                        H.(strcat('axis',num2str(n),'Diff'))=figure('WindowStyle','docked'),
                         plot(xAxis,abs(data.(fields{i})(:,n))-abs(reference.(rfields{i})(:,n)),xPlotOptions{:});hold on;
                         grid on;
                         legend(strcat((legendNames{n}),' error'));
                         title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),{' - '},escapeUnderscores(strcat(referenceName,{' '},(rfields{i})))));                        
                         xlabel(xAxisOption);
+                        legendmarkeradjust(20);
                         if n<4
                             ylabel('N');
                         else
