@@ -1,10 +1,12 @@
-function legendmarkeradjust(varargin)
+function [leg]=legendmarkeradjust(varargin)
 if ishandle(varargin{1}) && ~isnumeric(varargin{1})
     h=varargin{1};
     varargin={varargin{2:end}};
 else
     h=gcf;
 end
+
+
 
     a1=ver('matlab');
     
@@ -20,7 +22,10 @@ end
         legfontsize=leg.FontSize;
         legstrings=leg.String;
         legloc=leg.Location;
-        
+        legPos=leg.Position;
+        if length(varargin) > 1 && isnumeric(varargin{2})
+            legfontsize=varargin{2};
+        end
         delete(leg)
         
         [l1,l2,l3,l4]=legend(hAxes,legstrings);
@@ -37,13 +42,14 @@ end
         for n=1:length(l2)
             if sum(strcmp(properties(l2(n)),'FontSize'))
                 l2(n).FontSize=legfontsize;
+                %l2(n).FontSize=varargin{1};
             elseif sum(strcmp(properties(l2(n).Children),'FontSize'))
                 l2(n).Children.FontSize=varargin{1};
             end
         end
         
-        set(l1,'location',legloc)
-        
+        set(l1,'location',legloc,'FontSize',legfontsize,'position',legPos);
+        leg=l1;
     else
         
         s=get(legend);
@@ -67,5 +73,7 @@ end
                     set(s2(m),'markersize',marksize,'linewidth',lwidth);
                 end
         end
-        
+        leg=s;
     end
+    
+    

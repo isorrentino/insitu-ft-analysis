@@ -45,14 +45,14 @@ addpath utils
 readOptions = {};
 readOptions.forceCalculation=false;%false;
 readOptions.raw=true;
-readOptions.saveData=false;
+readOptions.saveData=true;
 readOptions.multiSens=true;
 readOptions.matFileName='ftDataset'; % name of the mat file used for save the experiment data
     % options not from read experiment
 readOptions.printPlots=false;%true
     % name and paths of the experiment files
     % change name to desired experiment folder
-    experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
+    experimentName='/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';% Name of the experiment;
     %'/green-iCub-Insitu-Datasets/2018_07_10_Grid';
    
 %   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
@@ -65,9 +65,9 @@ readOptions.printPlots=false;%true
     % Select sensors to calibrate the names are associated to the location of
     % the sensor in the robot
     % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-sensorsToAnalize = {'right_leg'};
+sensorsToAnalize = {'left_leg'};
     %Regularization parameter
-lambda=0;
+lambda=1000;
 if (lambda==0)
     lambdaName='';
 else
@@ -75,10 +75,10 @@ else
 end
 % lambdaName='';
     %calibration script options
-calibOptions.saveMat=true;
-calibOptions.estimateType=3;%0 only insitu offset, 1 is insitu, 2 is offset on main dataset, 3 is oneshot offset on main dataset, 4 is full oneshot
+calibOptions.saveMat=false;
+calibOptions.estimateType=3;%0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on all dataset, 4 is oneshot
 calibOptions.useTemperature=true;
-calibOptions.temperatureOffset=false;
+calibOptions.temperatureOffset=true;
     % Calibrate
 calibrationStep
 

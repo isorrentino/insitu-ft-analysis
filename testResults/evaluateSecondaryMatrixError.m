@@ -188,8 +188,8 @@ if plotResults
 h1= FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForcesTime,'byChannel','USESAMPLES');
 h2= FTplots(newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'byChannel','USESAMPLES');
 h3= FTplots(frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'byChannel','USESAMPLES');
-mergeFTplots(h2,h3)
-mergeFTplots(h1,h2)
+mergeFTplots(h2,h3);
+mergeFTplots(h1,h2);
     % 3D plot
     
     

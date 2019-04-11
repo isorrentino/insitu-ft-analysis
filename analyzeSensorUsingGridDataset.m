@@ -29,10 +29,11 @@ clc
 addpath external/quadfit
 addpath utils
 % name and paths of the data files
-   %experimentName=  'icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid';
+   experimentName=  'icub-insitu-ft-analysis-big-datasets/2016_05_19/blackBothLegs';
+    experimentName='0_5Nm_3';
 % experimentName='icub-insitu-ft-analysis-big-datasets/ati_on_Icub/ati_on_iCub/secondTrial';
 % experimentName='icub-insitu-ft-analysis-big-datasets/2016_05_09/darmstadt';
-experimentName='green-iCub-Insitu-Datasets/2017_12_5_TestGrid';%'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
+%experimentName='green-iCub-Insitu-Datasets/2017_12_5_TestGrid';%'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
 
 % Script options, meant to control the behavior of this script
 scriptOptions = {};
@@ -156,6 +157,7 @@ end
 
 %% Some visual inspection
 if(scriptOptions.printPlots)
+    fontSize=14;
     %% plot comparison using gravity (model)
     for ftIdx =1:length(sensorsToAnalize)
         ft = sensorsToAnalize{ftIdx};
@@ -170,7 +172,14 @@ if(scriptOptions.printPlots)
         ylabel('F_{y}');
         zlabel('F_{z}');
         axis equal;
-        legendmarkeradjust(20);
+        axis tight;
+        set(gca,'FontSize',fontSize)
+        legendmarkeradjust(20,fontSize);
+%         view([90,0,0])
+%         saveas(gcf,[outputFolder,'/','ZY'],'epsc');
+%         view(2)  
+%         axis tight;
+%         saveas(gcf,[outputFolder,'/','XY'],'epsc');
         pbaspect([1 1 1]);
         axis vis3d;
     end
@@ -192,7 +201,7 @@ if(scriptOptions.printPlots)
         zlabel('F_{z}');
         axis equal;
         grid on;
-        legendmarkeradjust(20);
+        legendmarkeradjust(20,fontSize);
     end
     % subtitle('Force estimated from the model and force measured (with offset removed)');
     
@@ -249,8 +258,14 @@ if(scriptOptions.printPlots)
         xlabel('F_{x}');
         ylabel('F_{y}');
         zlabel('F_{z}');
-        axis equal;
-        legendmarkeradjust(20);
+        axis tight;
+        set(gca,'FontSize',fontSize)
+        legendmarkeradjust(20,fontSize);
+%         view([90,0,0])
+%         saveas(gcf,[outputFolder,'/','ZY'],'epsc');
+%         view(2)  
+%         axis tight;
+%         saveas(gcf,[outputFolder,'/','XY'],'epsc');
         pbaspect([1 1 1]);
         axis vis3d;
     end
@@ -271,7 +286,7 @@ if(scriptOptions.printPlots)
         ylabel('F_{y}');
         zlabel('F_{z}');
         axis equal;
-        legendmarkeradjust(20);
+        legendmarkeradjust(20,fontSize);
         grid on;
     end
     % subtitle('Force estimated from the model and force measured (with offset removed)');

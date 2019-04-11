@@ -158,7 +158,7 @@ end
 overlineR = [rawData extraLinearVariables];
 %% variables that do not change
 expectedWrench_trans=expectedWrench';
-kA = kron(overlineR,eye(outputSize));
+kA = kron(overlineR,eye(outputSize));% should eye be eye(outputSize,inputSize)?
 kb=expectedWrench_trans(:);
 % A=kA'*kA+lambda*toPenalize;
 % b=kA'*kb+lambda*toPenalizeReference;
@@ -169,11 +169,11 @@ kaSize=size(kA,1);
 A=(kA'*kA)/kaSize+lambda*toPenalize;
 b=(kA'*kb)/kaSize+lambda*toPenalizeReference;
 
-% Normal regularized formula
-% x=pinv(kA'*kA)*kA'*kb;
-%
 %% apply least squares (linear regression)
-x=pinv(A)*b;
+% x=pinv(A)*b;
+%% QR solution to least squares
+[Q,R]=qr(A);
+x=R\(Q'*b);
 
 calibrationMatrix = reshape(x(1:calibrationMatrixLength), outputSize, inputSize);
 %% depending on options

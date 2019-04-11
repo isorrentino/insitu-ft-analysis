@@ -22,7 +22,7 @@ end
         Lineh2 = findobj(h2,'type','line'); %gives them in reverse order in which they were inputed.
         otherLegend=findobj(h2,'type','legend');
         %Lineh1 = findobj(h1,'type','line');
-        h1Axes=findobj(h1,'type','axes')
+        h1Axes=findobj(h1,'type','axes');
         copyobj(Lineh2,h1Axes);
         newLines = findobj(h1,'type','line');
         theLegend=findobj(h1,'type','legend');

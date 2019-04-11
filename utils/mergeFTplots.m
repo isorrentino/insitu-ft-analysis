@@ -59,7 +59,7 @@ end
         legendnames={'\tau_{x}','\tau_{y}','\tau_{z}'};
         end
          if mod(number,3)==0        
-        legendNames=createLegendNames(number,legendnames)
+        legendNames=createLegendNames(number,legendnames);
         else
             error('Expecting multiples of 3');
          end      

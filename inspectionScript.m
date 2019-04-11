@@ -11,8 +11,8 @@ addpath external/quadfit
 %experimentName='dataSamples/First_Time_Sensor';%
 %  experimentName='green-iCub-Insitu-Datasets/2018_07_10_Grid';
 
- experimentName='green-iCub-Insitu-Datasets/2018_12_11/Grid_4';
-
+%  experimentName='/green-iCub-Insitu-Datasets/2018_12_10/leftyoga';
+experimentName='2Nm_1';
 %     experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_3';
 %experimentName='green-iCub-Insitu-Datasets/heatonrightankle';
 
@@ -70,7 +70,7 @@ scriptOptions.filterData=true;
 if(strcmp(type,'random'))
     scriptOptions.estimateWrenches=false;
 else
-    scriptOptions.estimateWrenches=true;
+    scriptOptions.estimateWrenches=false;
 end
 scriptOptions.multiSens=true;
 scriptOptions.useInertial=false;
@@ -78,11 +78,11 @@ scriptOptions.matFileName='iCubDataset'; % Script of the mat file used for save 
 
 % Read experiment
 [dataset,estimator,input,extraSample]=readExperiment (experimentName,scriptOptions);
-if any(input.type)
+if isfield(input,'type')
    type=input.type; 
 end
 names=fieldnames(dataset.ftData);
-sensorsToAnalize={'left_leg'};
+sensorsToAnalize={'right_leg'};
 %%
 if(checkSaturation)
     for ftIdx =1:length(sensorsToAnalize)

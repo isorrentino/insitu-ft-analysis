@@ -85,7 +85,7 @@ if calculateddq
     dataset.ddqj=ddqj_all;
 else
     %for now acc values are unreliable so zeroes
-    %ddqj_all=dataset.ddqj;
+%     ddqj_all=dataset.ddqj;
     ddqj_all=zeros(size(dataset.ddqj));
 end
 
