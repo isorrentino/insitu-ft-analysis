@@ -29,11 +29,11 @@ clc
 addpath external/quadfit
 addpath utils
 % name and paths of the data files
-   experimentName=  'icub-insitu-ft-analysis-big-datasets/2016_05_19/blackBothLegs';
-    experimentName='0_5Nm_3';
+%    experimentName=  'icub-insitu-ft-analysis-big-datasets/2016_05_19/blackBothLegs';
+%     experimentName='0_5Nm_3';
 % experimentName='icub-insitu-ft-analysis-big-datasets/ati_on_Icub/ati_on_iCub/secondTrial';
 % experimentName='icub-insitu-ft-analysis-big-datasets/2016_05_09/darmstadt';
-%experimentName='green-iCub-Insitu-Datasets/2017_12_5_TestGrid';%'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
+experimentName='green-iCub-Insitu-Datasets/2019_05_31/grid1/';%'icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
 
 % Script options, meant to control the behavior of this script
 scriptOptions = {};
@@ -162,10 +162,10 @@ if(scriptOptions.printPlots)
     for ftIdx =1:length(sensorsToAnalize)
         ft = sensorsToAnalize{ftIdx};
         figure,
-        plot3_matrix(model.ftDataNoOffset.(ft)(:,1:3),'b.'); hold on;
-        plot3_matrix(dataset.estimatedFtData.(ft)(:,1:3),'g.'); hold on;
-        plot_ellipsoid_im(model.ellipsoid_im.(ft),'EdgeColor','k');
-        plot_ellipsoid_im(fittedEllipsoid_im_circular.(ft));
+        plot3_matrix(model.ftDataNoOffset.(ft)(:,1:3),'.','Color',[12,44,132]/255); hold on;
+        plot3_matrix(dataset.estimatedFtData.(ft)(:,1:3),'.','Color',[177,0,38]/255); hold on;
+        plot_ellipsoid_im(model.ellipsoid_im.(ft),'EdgeColor', [65,182,196]/255);
+        plot_ellipsoid_im(fittedEllipsoid_im_circular.(ft),'EdgeColor',[253,141,60]/255);
         legend('measuredData','estimatedData','Location','west');
         title(strcat({'Wrench space '},escapeUnderscores(ft)));
         xlabel('F_{x}');
@@ -247,12 +247,19 @@ if(scriptOptions.printPlots)
     for ftIdx =1:length(sensorsToAnalize)
         ft = sensorsToAnalize{ftIdx};
         figure,
-        plot3_matrix(no_model.ftDataNoOffset.(ft)(:,1:3),'b.'); hold on;
+        plot3_matrix(no_model.ftDataNoOffset.(ft)(:,1:3),'.','Color',[12,44,132]/255); hold on;
         %plot3_matrix(dataset.estimatedFtData.(ft)(:,1:3),'g.'); hold on;
-        plot_ellipsoid_im(no_model.ellipsoid_im.(ft),'EdgeColor','m');
+        plot_ellipsoid_im(no_model.ellipsoid_im.(ft),'EdgeColor', [65,182,196]/255);
         [~,radii,~,R]=ellipsoid_im2ex(no_model.ellipsoid_im.(ft));
         [newSphere]=ellipsoid_ex2im([0,0,0],[min(radii),min(radii),min(radii)],R);
-        plot_ellipsoid_im(newSphere,'EdgeColor','k');
+        plot_ellipsoid_im(newSphere,'EdgeColor',[253,141,60]/255);
+        %
+        plot3_matrix(model.ftDataNoOffset.(ft)(:,1:3),'.','Color',[12,44,132]/255); hold on;
+        plot3_matrix(dataset.estimatedFtData.(ft)(:,1:3),'.','Color',[177,0,38]/255); hold on;
+        plot_ellipsoid_im(model.ellipsoid_im.(ft),'EdgeColor', [65,182,196]/255);
+        plot_ellipsoid_im(fittedEllipsoid_im_circular.(ft),'EdgeColor',[253,141,60]/255);
+        
+        %
         legend('measuredData','Location','west');
         title(strcat({'Wrench space no gravity '},escapeUnderscores(ft)));
         xlabel('F_{x}');

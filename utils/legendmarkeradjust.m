@@ -25,6 +25,7 @@ end
         legPos=leg.Position;
         if length(varargin) > 1 && isnumeric(varargin{2})
             legfontsize=varargin{2};
+            hAxes.FontSize=legfontsize;
         end
         delete(leg)
         
