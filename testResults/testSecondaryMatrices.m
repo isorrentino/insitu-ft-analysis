@@ -22,10 +22,15 @@ scriptOptions.printAll=true;
 %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_multipleTemperatures';% Name of the experiment;
 % %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_AllGeneral';% Name of the experiment;
 %     };
+% experimentNames={ %iCubGenova04 experiments
+% %     '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
+%     '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
+% %     '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
+%     };
+
 experimentNames={ %iCubGenova04 experiments
-%     '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
-    '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
-%     '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
+    'green-iCub-Insitu-Datasets/2019_07_03/calibDataset';
+
     };
 
 names={'Workbench';
@@ -35,29 +40,35 @@ names={'Workbench';
     };% except for the first one all others are short names for the expermients in experimentNames
 
 
-% lambdas=[
-%     0;
-%     1;
-%     5;
-%     10;
-%     50;
-%     100;
-%     1000;
-%     5000;
-%     10000;
-%     50000;
-%     100000;
-%     500000;
-%     1000000
-%     ];
+lambdas=[
+    0;
+    1;
+    5;
+    10;
+    50;
+    100;
+    250;
+    500;
+    750;
+    1000;
+    2500;
+    5000;
+    10000;
+    50000;
+    100000;
+    500000;
+    1000000
+    ];
 % estimation types/
 % estimationTypes=[1,1,1,3,3,3,4,4,4];
 % useTempBooleans=[0,1,1,0,1,1,0,1,1];
 % useTempOffset  =[0,0,1,0,0,1,0,0,1];
-lambdas=[100];
-estimationTypes=[3,3];
-useTempBooleans=[1,1];
-useTempOffset  =[0,1];
+estimationTypes=[1,1,4,4];
+useTempBooleans=[0,1,0,1];
+useTempOffset  =[0,1,0,1];
+% estimationTypes=[4,4];
+% useTempBooleans=[0,1];
+% useTempOffset  =[0,1];
 %% Create appropiate names for the calibration matrices to be tested
 lambdasNames=generateLambdaNames(lambdas);
 if ~exist('estimationTypes','var')
@@ -73,12 +84,12 @@ names2use=[names{1};names2use];
 % sensorsToAnalize = {'left_leg','right_leg'};  %load the new calibration matrices
 % framesToAnalize={'r_upper_leg','l_upper_leg'};
 % sensorName={'r_leg_ft_sensor','l_leg_ft_sensor','r_foot_ft_sensor','l_foot_ft_sensor'};
-% sensorsToAnalize = {'right_leg'};  %load the new calibration matrices
-% framesToAnalize={'r_upper_leg'};
-% sensorName={'r_leg_ft_sensor'};
-sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
-framesToAnalize={'l_upper_leg'};
-sensorName={'l_leg_ft_sensor'};
+sensorsToAnalize = {'right_leg'};  %load the new calibration matrices
+framesToAnalize={'r_upper_leg'};
+sensorName={'r_leg_ft_sensor'};
+% sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
+% framesToAnalize={'l_upper_leg'};
+% sensorName={'l_leg_ft_sensor'};
 
 %% Read the calibration matrices to evaluate
 
@@ -86,13 +97,14 @@ sensorName={'l_leg_ft_sensor'};
 
 % %% Select datasets in which the matrices will be evaluated
 
-toCompare={'/green-iCub-Insitu-Datasets/2018_12_10/Grid_2','/green-iCub-Insitu-Datasets/2018_12_10/tz_2','/green-iCub-Insitu-Datasets/2018_12_10/leftyoga','/green-iCub-Insitu-Datasets/2018_12_04/leftyoga_3','/green-iCub-Insitu-Datasets/2018_12_04/rightyoga_3',};
-toCompareNames={'Grid27Degree','Tz27Degree','LeftYoga34Degree','LeftYoga38Degree','RightYoga38Degree'}; % short Name of the experiments for iCubGenova02
-reduceBy=[100,10,10,10,10]; % value used in datasampling;
-useKnownOffset=true;
+toCompare={
+    'green-iCub-Insitu-Datasets/2019_07_03/yogaleft2','green-iCub-Insitu-Datasets/2019_07_03/yogaleft3','/green-iCub-Insitu-Datasets/2019_07_03/tz4','/green-iCub-Insitu-Datasets/2019_07_03/yogaright2','/green-iCub-Insitu-Datasets/2019_07_03/yogaright3','/green-iCub-Insitu-Datasets/2019_07_03/grid5','/green-iCub-Insitu-Datasets/2019_07_03/grid2'};
+toCompareNames={'LeftYoga34Degree','LeftYoga37Degree','Tz36Degree','RightYoga34Degree','RightYoga37Degree','Grid36Degree','Grid32Degree'}; % short Name of the experiments for iCubGenova02
+reduceBy=[10,10,10,10,10,100,100]; % value used in datasampling;
+useKnownOffset=false;
 % offset times for each comparison dataset
-sampleInit=[40,40,1040,1040,1040];
-sampleEnd=[60,60,1060,1060,1060];
+sampleInit=[1040,1040,40,1040,1040,40,40];
+sampleEnd=[1060,1060,60,1060,1060,60,60];
 if length(toCompareNames)~=length(sampleInit) || length(toCompareNames)~=length(sampleEnd)
     error('testSecondaryMatrices: begining and end of the samples in which the offset will be calculated should be provided for all data sets to compare');
     
@@ -134,7 +146,7 @@ for c=1:length(toCompare)
     %% Calculate offsets for each secondary matrix for each comparison dataset
      % compute offset or store known offset
     % workbench does not currently have a known offset
-    offset.(toCompareNames{c}).(names2use{1})=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,secMat.(names2use{1}));
+    offset.(toCompareNames{c}).(names2use{1})=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input);%,secMat.(names2use{1})); having the secMat of workbench which is all of them to identity seems to indicate we want to check all sensors when its not true.
     % for all other matrices
     for i=2:length(names2use)
         calculatedOffset=calculateOffsetUsingWBD(estimator,data.(toCompareNames{c}),sampleInit(c),sampleEnd(c),input,'secMat',secMat.(names2use{i}),'tempCoeff',extraCoeff.(names2use{i}),'tempOffset',extraCoeffOffset.(names2use{i}));
