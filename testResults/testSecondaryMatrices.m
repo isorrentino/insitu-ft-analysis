@@ -1,8 +1,8 @@
 %clear all
 %close all
 clc
-addpath utils
-addpath external/quadfit
+addpath ../utils
+addpath ../external/quadfit
 %% Prepare options of the test
 scriptOptions = {};
 scriptOptions.testDir=true;
@@ -84,12 +84,12 @@ names2use=[names{1};names2use];
 % sensorsToAnalize = {'left_leg','right_leg'};  %load the new calibration matrices
 % framesToAnalize={'r_upper_leg','l_upper_leg'};
 % sensorName={'r_leg_ft_sensor','l_leg_ft_sensor','r_foot_ft_sensor','l_foot_ft_sensor'};
-sensorsToAnalize = {'right_leg'};  %load the new calibration matrices
-framesToAnalize={'r_upper_leg'};
-sensorName={'r_leg_ft_sensor'};
-% sensorsToAnalize = {'left_leg'};  %load the new calibration matrices
-% framesToAnalize={'l_upper_leg'};
-% sensorName={'l_leg_ft_sensor'};
+% sensorsToAnalize = {'right_foot'};  %load the new calibration matrices
+% framesToAnalize={'r_upper_leg'};
+% sensorName={'r_foot_ft_sensor'};
+sensorsToAnalize = {'left_foot'};  %load the new calibration matrices
+framesToAnalize={'l_upper_leg'};
+sensorName={'l_foot_ft_sensor'};
 
 %% Read the calibration matrices to evaluate
 
@@ -233,6 +233,9 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
     extForceResults.toCompare=toCompare;
     extForceResults.experimentNames=experimentNames;
     extForceResults.cMat=cMat;
+    extForceResults.extraCoeff=extraCoeff;
+    extForceResults.extraCoeffOffset=extraCoeffOffset;
+    extForceResults.offsets=offsets;
     if strfind(pwd,'testResults')>0
         prefix='../';
     else

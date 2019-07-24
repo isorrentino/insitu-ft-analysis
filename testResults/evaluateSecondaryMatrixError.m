@@ -1,5 +1,5 @@
 %% Evaluate error
-loadResult=true;
+loadResult=false;
 % convert from extForceResults structure to what is used here
 if exist('stackedResults','var') && ~loadResult
     names2evaluate=names2use;
@@ -17,6 +17,9 @@ else
     stackedResults=extForceResults.results;
     names2use=extForceResults.names.names2use;
     cMat=extForceResults.cMat;
+    offsets=extForceResults.offsets;
+    extraCoeff=extForceResults.extraCoeff;
+    extraCoeffOffset=extForceResults.extraCoeffOffset;
     WorkbenchMat=cMat.Workbench;
     lambdas=extForceResults.lambdas;
     lambdasNames=generateLambdaNames(extForceResults.lambdas);
@@ -101,6 +104,10 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
             sCalibMat.(sensorsToAnalize{j})=cMat.(names2evaluate{minIndall}).(sensorsToAnalize{j})/(WorkbenchMat.(sensorsToAnalize{j}));%calculate secondary calibration matrix
             bestCMat.(sensorsToAnalize{j})=cMat.(names2evaluate{minIndall}).(sensorsToAnalize{j});
             bestName.(sensorsToAnalize{j})=names2evaluate{minIndall};
+            bestExtraCoeff.(sensorsToAnalize{j})=extraCoeff.(names2evaluate{minIndall}).(sensorsToAnalize{j});
+            bestExtraCoeffOffset.(sensorsToAnalize{j})=extraCoeffOffset.(names2evaluate{minIndall}).(sensorsToAnalize{j});
+            bestOffset.(sensorsToAnalize{j})=offsets.(names2evaluate{minIndall}).(sensorsToAnalize{j});
+            
             xmlStr.(sensorName{j})=cMat2xml(sCalibMat.(sensorsToAnalize{j}),sensorName{j});% print in required format to use by WholeBodyDynamics
             
             axisName={'fx','fy','fz','tx','ty','tz'};
@@ -124,6 +131,9 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
                 end
                 
                 frankieMatrix.(sensorsToAnalize{j})(axisN,:)=cMat.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
+                frankieCoeffs.(sensorsToAnalize{j})(axisN,:)=extraCoeff.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
+                frankieCoeffsOffset.(sensorsToAnalize{j})(axisN,:)=extraCoeffOffset.(names2evaluate{minInd}).(sensorsToAnalize{j});
+                frankieOffset.(sensorsToAnalize{j})(axisN,:)=offsets.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
                 frankieData.(framesToAnalize{frN})(:,axisN)=stackedResults.(sensorsToAnalize{j}).(names2evaluate{minInd}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(:,axisN);
             end
             fCalibMat.(sensorsToAnalize{j})=frankieMatrix.(sensorsToAnalize{j})/(WorkbenchMat.(sensorsToAnalize{j}));%calculate secondary calibration matrix
