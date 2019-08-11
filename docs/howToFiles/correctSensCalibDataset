@@ -1,7 +1,8 @@
 ## Easily correct the extra _0001 coming from the outdated bug version of sensors calib inertial ft branch.
 Follow these steps:
+
 - create a folder "experiment type" where to put the `icub.sensorsTestDataAcquisition#.seq#` folder.
-- go in the folder: `cd "experiment name" `
+- go in the folder: `cd "experiment name"`
 - use : `prename -v 's/stateExt/toErase2/' */*/*stateExt`
 - use : `prename -v 's/analog/toErase2/' */*/*analog`
 - use : `prename -v 's/measures/toErase2/' */*/*measures`
