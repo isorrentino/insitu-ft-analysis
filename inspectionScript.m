@@ -12,17 +12,22 @@ addpath external/quadfit
 %  experimentName='green-iCub-Insitu-Datasets/2018_07_10_Grid';
 
 %  experimentName='/green-iCub-Insitu-Datasets/2018_12_10/leftyoga';
-experimentName='2Nm_1';
+%   experimentName='green-iCub-Insitu-Datasets/2019_07_03/yogaleft1';
 %     experimentName='/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_right_yoga_3';
-%experimentName='green-iCub-Insitu-Datasets/heatonrightankle';
-
+%  experimentName='green-iCub-Insitu-Datasets/torqueWalking3steps_2019_08_02_1';
+% experimentName='green-iCub-Insitu-Datasets/dumper_simulation_torque_walking';
+%  experimentName='green-iCub-Insitu-Datasets/yogaLeft_2019_08_06';
+%   experimentName='green-iCub-Insitu-Datasets/2019_07_03/yogaleft1';
+% experimentName='2019_08_10/yogaleft_changedJointOffsets';
+experimentName='temperatureRobotTests/dumper';
+% experimentName='2019_08_11/yogaright2';
 
 %Desired inspection sections
 checkSaturation=false;
 sphereReference=false;
 Force3Dspace=false;
 ForceVsTime=false;
-visualizeData=true;
+visualizeData=false;
 PromptForIntervals=false;
 checKJointValues= false;
 compareTemperature=false;
@@ -37,11 +42,11 @@ compareTemperature=false;
 % contactSwitchingleftyoga
 % standUpleftyogaleftyogaleftyogaleftyogaleftyoga
 % walking
-type='right_leg_yoga';
+type='left_leg_yoga';
 %% set references
 useReference=true;
 refOptions = {};
-refOptions.forceCalculation=false;%false;
+refOptions.forceCalculation=true;%false;
 refOptions.saveData=false;
 refOptions.testDir=false;% to calculate the raw data, for recalibration always true
 refOptions.filterData=true;
@@ -60,17 +65,18 @@ refNames=fieldnames(referenceExp);
 
 %% Read data
 scriptOptions = {};
-scriptOptions.forceCalculation=false;%false;
+scriptOptions.forceCalculation=true;%false;
 if(checkSaturation)
     scriptOptions.raw=true;
 end
 scriptOptions.saveData=true;
 scriptOptions.testDir=false;% to calculate the raw data, for recalibration always true
 scriptOptions.filterData=true;
+scriptOptions.calculateAcc=true;
 if(strcmp(type,'random'))
     scriptOptions.estimateWrenches=false;
 else
-    scriptOptions.estimateWrenches=false;
+    scriptOptions.estimateWrenches=true;
 end
 scriptOptions.multiSens=true;
 scriptOptions.useInertial=false;
@@ -82,7 +88,7 @@ if isfield(input,'type')
    type=input.type; 
 end
 names=fieldnames(dataset.ftData);
-sensorsToAnalize={'right_leg'};
+sensorsToAnalize={'right_leg','left_leg'};
 %%
 if(checkSaturation)
     for ftIdx =1:length(sensorsToAnalize)
@@ -181,7 +187,7 @@ end
 if (visualizeData)
     global storedInis storedEnds storedTimeInis storedTimeEnds
    visualizeExperiment(dataset,input,sensorsToAnalize);
-   
+   'fixedFrame'
    %visualizeExperiment(dataset,input,sensorsToAnalize,'torque');
     
 end

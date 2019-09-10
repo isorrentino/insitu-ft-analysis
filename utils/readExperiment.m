@@ -50,6 +50,10 @@ if (~any(strcmp('filterData', fieldnames(scriptOptions))))
     scriptOptions.filterData=true;
     disp(' Using default value filterData=true');
 end
+if (~any(strcmp('calculateAcc', fieldnames(scriptOptions))))
+    scriptOptions.calculateAcc=true;
+    disp(' Using default value calculateAcc=true');
+end
 if (~any(strcmp('raw', fieldnames(scriptOptions))))
     scriptOptions.raw=false;
     disp(' Using default value raw=false');
@@ -197,7 +201,7 @@ else
                 end
                 [uniqueValues,uniqueIndex]=unique(sensors_temp.temperature.measures(:,1));
                 if ( length(uniqueValues)>1)
-                    temperature.(input.ftNames{i})=interp1(sensors_temp.temperature.time(uniqueIndex), uniqueValues  , time);
+                    temperature.(input.ftNames{i})=round(interp1(sensors_temp.temperature.time(uniqueIndex), uniqueValues  , time),1);
                 else
                     temperature.(input.ftNames{i})(1:length(time),1)=uniqueValues*ones(size(time));
                 end
@@ -304,8 +308,20 @@ else
     if(scriptOptions.filterData)
         disp( 'readExperiment: Filtering FT data');
         [filteredFtData,mask]=filterFtData(dataset.ftData);
+        %% Use sgolayFilter for getting acceleration
+        if (scriptOptions.calculateAcc)
+            disp( 'readExperiment: Estimating Acceleration using sgolay filter');
+            timeDelta=dataset.time(2)-dataset.time(1);
+            % values found during extensive tests
+           [ddqj,mask_acc,~]=filterJointData(dataset.qj,timeDelta);
+            dataset.ddqj=ddqj;
+            mask=and(mask,mask_acc);
+        else % for the time being to keep the same previoius behavior
+            dataset.ddqj=zeros(size(dataset.ddqj));
+        end        
+        dataset.filteredFtData=filteredFtData;        
         dataset=applyMask(dataset,mask);
-        dataset.filteredFtData=applyMask(filteredFtData,mask);
+        %         dataset.filteredFtData=applyMask(filteredFtData,mask);
     end
     %% Estimate wrenches
     if(scriptOptions.estimateWrenches)
@@ -314,6 +330,10 @@ else
         dataset=applyMask(dataset,intervalMask);
         dataset.estimatedFtData=estimatedDataset.estimatedFtData;
         dataset.contactFrame=contactFrame;
+        
+        if isfield(estimatedDataset,'inertial')           
+            dataset.estimatedInertialData=estimatedDataset.inertial;
+        end
     end
     %% Calculate raw data using known calibration matrix
     if(scriptOptions.raw)
