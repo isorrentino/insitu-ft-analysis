@@ -27,12 +27,18 @@ addpath utils
 %     '/icub-insitu-ft-analysis-big-datasets/2018_09_07_ICRA/2018_09_07_MixedDataSets';% Name of the experiment;
 %     };
 
+% experimentNames={ %iCubGenova04 experiments
+%     '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
+%      '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
+%       '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
+%   
+%      };
+
 experimentNames={ %iCubGenova04 experiments
-    '/green-iCub-Insitu-Datasets/2018_12_11/noTz';
-     '/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';
-      '/green-iCub-Insitu-Datasets/2018_12_11/allTogether';
+    '2019_08_10/grid';
   
      };
+
 
 % read experiment options
 readOptions = struct();
@@ -52,23 +58,30 @@ readOptions.printPlots=false;%true
 sensorsToAnalize = {'right_leg','left_leg'};
 lambdas=[
     0;
-%     1;
-%     5;
-%     10;
-%     50;
-%     100;
-%     1000;
-%     5000;
-%     10000;
-%     50000;
+    1;
+    5;
+    10;
+    50;
+    100;
+    250;
+    500;
+    750;
+    1000;
+    2500;
+    5000;
+    10000;
+    50000;
 %     100000;
 %     500000;
 %     1000000
     ];
 % estimation types/
-estimationTypes=[1,1,1,3,3,3,4,4,4];
-useTempBooleans=[0,1,1,0,1,1,0,1,1];
-useTempOffset  =[0,0,1,0,0,1,0,0,1];
+% estimationTypes=[1,1,1,3,3,3,4,4,4];
+% useTempBooleans=[0,1,1,0,1,1,0,1,1];
+% useTempOffset  =[0,0,1,0,0,1,0,0,1];
+estimationTypes=[1,1,4,4];
+useTempBooleans=[0,1,0,1];
+useTempOffset  =[0,1,0,1];
 %lambdas=0;
 % Create appropiate names for the lambda variables
 lambdasNames=generateLambdaNames(lambdas);
