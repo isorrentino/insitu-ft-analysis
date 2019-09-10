@@ -2,8 +2,8 @@ function [ ]=mergeFTplots(h1,h2,varargin)
 cleanUp=true;
 if mod(length(varargin),2)==0 && length(varargin)>0
     switch varargin{1}
-        case {'groupNames'}
-            groupNames=varargin{1+1}
+        case {'thisLegendNames'}
+            thisLegendNames=varargin{1+1}
         case {'cleanUp'};
             cleanUp=varargin{1+1};
     end
@@ -26,7 +26,11 @@ if length(fields2)<=length(fields1) && sum(ismember(fields1,fields2))==length(fi
                 name=(theLegend.String{1});
               legendNames=  produceLegendNames(number,name);
         end
+        if exist('thisLegendNames','var')
+            legend(findobj(h1.(fields2{f}),'type','axes'),thisLegendNames);
+        else
         legend(findobj(h1.(fields2{f}),'type','axes'),legendNames);
+        end
         legendmarkeradjust(h1.(fields2{f}),20);
         if cleanUp
             close(h2.(fields2{f}));

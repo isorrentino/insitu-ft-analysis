@@ -1,5 +1,5 @@
 %% Evaluate error
-loadResult=false;
+loadResult=true;
 % convert from extForceResults structure to what is used here
 if exist('stackedResults','var') && ~loadResult
     names2evaluate=names2use;
@@ -133,7 +133,11 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
                 frankieMatrix.(sensorsToAnalize{j})(axisN,:)=cMat.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
                 frankieCoeffs.(sensorsToAnalize{j})(axisN,:)=extraCoeff.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
                 frankieCoeffsOffset.(sensorsToAnalize{j})(axisN,:)=extraCoeffOffset.(names2evaluate{minInd}).(sensorsToAnalize{j});
+                if strcmp((names2evaluate{minInd}),'Workbench')
+                    frankieOffset.(sensorsToAnalize{j})(axisN,:)=-99999;
+                else
                 frankieOffset.(sensorsToAnalize{j})(axisN,:)=offsets.(names2evaluate{minInd}).(sensorsToAnalize{j})(axisN,:);
+                end
                 frankieData.(framesToAnalize{frN})(:,axisN)=stackedResults.(sensorsToAnalize{j}).(names2evaluate{minInd}).externalForcesAtSensorFrame.(framesToAnalize{frN}).(sensorsToAnalize{j})(:,axisN);
             end
             fCalibMat.(sensorsToAnalize{j})=frankieMatrix.(sensorsToAnalize{j})/(WorkbenchMat.(sensorsToAnalize{j}));%calculate secondary calibration matrix
@@ -158,11 +162,11 @@ for j=1:length(sensorsToAnalize) %why for each sensor? because there could be 2 
                 set(gca,'YTick',1:length(xBarNames));
                 set(gca,'YTickLabel',escapeUnderscores(   xBarNames));
                 set(gca,'XTickLabel',lambdas');
-                ylabel('Dataset+estimationType')
-                xlabel('\lambda')
-                zlabel('External Force (N)')
-                title(strcat('Second Validation Procedure Results ',escapeUnderscores((sensorsToAnalize{j}))))
-                colorbar
+                ylabel('Dataset+estimationType');
+                xlabel('\lambda');
+                zlabel('External Force (N)');
+                title(strcat('Second Validation Procedure Results ',escapeUnderscores((sensorsToAnalize{j}))));
+                colorbar;
                 for k = 1:length(b)
                     zdata = b(k).ZData;
                     b(k).CData = zdata;
@@ -183,6 +187,8 @@ for j=1:length(sensorName)
     disp('BEST over all')
     disp(xmlStr.(sensorName{j}))
     fprintf('\n');
+    OffsetFT=bestOffset.(sensorsToAnalize{j})'
+    TempCoeffAndTempOff=[bestExtraCoeff.(sensorsToAnalize{j})',bestExtraCoeffOffset.(sensorsToAnalize{j})]
     disp('BEST by axis ')
     disp( xmlStrFrankie.(sensorName{j})   )
 end
@@ -199,9 +205,17 @@ h1= FTplots(comparisonData,stackedResults.(sensorsToAnalize{j}).Workbench.eForce
 h2= FTplots(newData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'byChannel','USESAMPLES');
 h3= FTplots(frankieData,stackedResults.(sensorsToAnalize{j}).(names2evaluate{minIndall}).eForcesTime,'byChannel','USESAMPLES');
 mergeFTplots(h2,h3);
-mergeFTplots(h1,h2);
+mergeFTplots(h1,h2,'thisLegendNames',{'workbench','bestOverAll','bestByAxis'});
     % 3D plot
-    
+    outputFolder='';
+   fieldNamesh1=fieldnames(h1);
+   for fnh=1:length(fieldNamesh1)
+       fnameh1=fieldNamesh1{fnh};
+%       saveas(h1.(fnameh1),[outputFolder,'/',fnameh1],'epsc') 
+%       saveas(h1.(fnameh1),[outputFolder,'/',fnameh1],'png') 
+        saveas(h1.(fnameh1),fnameh1,'png') 
+       
+   end
     
 end
 %% clear variables
