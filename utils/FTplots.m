@@ -176,6 +176,7 @@ if (~byChannel && isempty(reference))
         ylabel('N');
         legendmarkeradjust(20);
         grid on;
+        axis tight;
     end
     if(~onlyForce)
         for  i=1:size(fields,1)
@@ -193,6 +194,7 @@ if (~byChannel && isempty(reference))
             ylabel('Nm');
             legendmarkeradjust(20);
             grid on;
+            axis tight;
         end
     end
 end
@@ -216,6 +218,7 @@ if (~isempty(reference) && ~byChannel)
         ylabel('N');
         legendmarkeradjust(20);
         grid on;
+        axis tight;
     end
     if(~onlyForce)
         for  i=1:size(fields,1)
@@ -236,6 +239,7 @@ if (~isempty(reference) && ~byChannel)
             ylabel('Nm');
             legendmarkeradjust(20);
             grid on;
+            axis tight;
         end
     end
     if (length(time)== length(referenceTime) && showDifference)
@@ -256,6 +260,7 @@ if (~isempty(reference) && ~byChannel)
             ylabel('N');
             legendmarkeradjust(20);
             grid on;
+            axis tight;
         end
         if(~onlyForce)
             for  i=1:size(fields,1)
@@ -273,6 +278,7 @@ if (~isempty(reference) && ~byChannel)
                 ylabel('Nm');
                 legendmarkeradjust(20);
                 grid on;
+                axis tight;
             end
         end
     end
@@ -295,6 +301,7 @@ if (byChannel)
             H.(strcat('axis',num2str(n)))= figure('WindowStyle','docked');
             plot(xAxis,data.(fields{i})(:,n),xPlotOptions{:});
             grid on;
+            axis tight;
             if ~isempty(reference)
                 hold on; plot(xAxisReference,reference.(rfields{i})(:,n),yPlotOptions{:});
                 legend((legendNames{n}),strcat((legendNames{n}),'_2'));
@@ -320,6 +327,7 @@ if (byChannel)
                         H.(strcat('axis',num2str(n),'Diff'))=figure('WindowStyle','docked'),
                         plot(xAxis,abs(data.(fields{i})(:,n))-abs(reference.(rfields{i})(:,n)),xPlotOptions{:});hold on;
                         grid on;
+                        axis tight;
                         legend(strcat((legendNames{n}),' error'));
                         title(strcat((legendNames{n}),{' : '},escapeUnderscores((fields{i})),{' - '},escapeUnderscores(strcat(referenceName,{' '},(rfields{i})))));                        
                         xlabel(xAxisOption);
