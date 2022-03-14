@@ -41,31 +41,27 @@ addpath external/walkingDatasetScripts
 addpath utils
 
 %% Read data
-    % general reading configuration options
-readOptions = {};
-readOptions.forceCalculation=false;%false;
-readOptions.raw=true;
-readOptions.saveData=true;
-readOptions.multiSens=true;
-readOptions.matFileName='ftDataset'; % name of the mat file used for save the experiment data
-    % options not from read experiment
-readOptions.printPlots=false;%true
-    % name and paths of the experiment files
-    % change name to desired experiment folder
-    experimentName='/green-iCub-Insitu-Datasets/2018_12_11/onlySupportLegs';% Name of the experiment;
-    %'/green-iCub-Insitu-Datasets/2018_07_10_Grid';
-   
-%   experimentName='/green-iCub-Insitu-Datasets/2018_07_10_Grid';
-%    experimentName= '/icub-insitu-ft-analysis-big-datasets/2018_09_07/2018_09_07_Grid_2';% Name of the experiment;
-% experimentName='icub-insitu-ft-analysis-big-datasets/iCubGenova04/exp_1/poleLeftRight';
-% experimentName='/green-iCub-Insitu-Datasets/2018_07_10_LeftYogaWarm';
-[dataset,~,input,extraSample]=readExperiment(experimentName,readOptions);
+% general reading configuration options
+scriptOptions = {};
+scriptOptions.forceCalculation=true;
+scriptOptions.printPlots=true;
+scriptOptions.raw=true;
+scriptOptions.saveData=true;
+scriptOptions.testDir=false;
+scriptOptions.filterData=true;
+scriptOptions.estimateWrenches=true;
+scriptOptions.useInertial=false;
+scriptOptions.matFileName='ftDataset';
+
+experimentName='ArmsShoulderPitchRoll';% Name of the experiment;
+
+[dataset,~,input,extraSample]=readExperiment(experimentName,scriptOptions);
 
 %% Calibration options
     % Select sensors to calibrate the names are associated to the location of
     % the sensor in the robot
     % on iCub  {'left_arm','right_arm','left_leg','right_leg','right_foot','left_foot'};
-sensorsToAnalize = {'left_leg'};
+sensorsToAnalize = {'left_arm','right_arm'};
     %Regularization parameter
 lambda=1000;
 if (lambda==0)
@@ -75,10 +71,13 @@ else
 end
 % lambdaName='';
     %calibration script options
-calibOptions.saveMat=false;
-calibOptions.estimateType=3;%0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on all dataset, 4 is oneshot
-calibOptions.useTemperature=true;
-calibOptions.temperatureOffset=true;
+calibOptions.saveMat=true;
+calibOptions.usingInsitu=true;
+calibOptions.plot=true;
+calibOptions.onlyWSpace=true;
+% calibOptions.estimateType=3;%0 only insitu offset, 1 is shpere offset , 2 is no mean offset on main dataset, 3 is no mean offset on all dataset, 4 is oneshot
+% calibOptions.useTemperature=false;
+% calibOptions.temperatureOffset=false;
     % Calibrate
 calibrationStep
 
